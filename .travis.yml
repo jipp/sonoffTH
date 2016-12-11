@@ -79,5 +79,6 @@ env:
 install:
     - pip install -U platformio
     - platformio lib -g install 31 64 19 1101 89 560 1265
+
 script:
-    - make travis-build
+    - platformio run
