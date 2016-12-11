@@ -105,14 +105,14 @@ void updater() {
     t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", "sonoffTH.ino");
     switch (ret) {
       case HTTP_UPDATE_FAILED:
-        Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
-        break;
+      Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
+      break;
       case HTTP_UPDATE_NO_UPDATES:
-        Serial << "HTTP_UPDATE_NO_UPDATES" << endl;
-        break;
+      Serial << "HTTP_UPDATE_NO_UPDATES" << endl;
+      break;
       case HTTP_UPDATE_OK:
-        Serial << "HTTP_UPDATE_OK" << endl;
-        break;
+      Serial << "HTTP_UPDATE_OK" << endl;
+      break;
     }
   }
 }
@@ -125,27 +125,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial << endl;
   switch (payload[0]) {
     case '0':
-      if (switchState != '0') {
-        digitalWrite(RELAY, LOW);
-        switchState = '0';
-        switchTransmit = true;
-        writeSwitchState();
-      }
-      break;
+    if (switchState != '0') {
+      digitalWrite(RELAY, LOW);
+      switchState = '0';
+      switchTransmit = true;
+      writeSwitchState();
+    }
+    break;
     case '1':
-      if (switchState != '1') {
-        digitalWrite(RELAY, HIGH);
-        switchState = '1';
-        switchTransmit = true;
-        writeSwitchState();
-      }
-      break;
+    if (switchState != '1') {
+      digitalWrite(RELAY, HIGH);
+      switchState = '1';
+      switchTransmit = true;
+      writeSwitchState();
+    }
+    break;
     case '2':
-      updater();
-      break;
+    updater();
+    break;
     case '3':
-      resetESP();
-      break;
+    resetESP();
+    break;
   }
 }
 
@@ -261,10 +261,10 @@ void setupID() {
 
   WiFi.macAddress(mac);
   Serial << "Mac: " << _HEX(mac[0]) << ":" << _HEX(mac[1]) << ":"
-         << _HEX(mac[2]) << ":" << _HEX(mac[3]) << ":" << _HEX(mac[4]) << ":"
-         << _HEX(mac[5]) << endl;
+  << _HEX(mac[2]) << ":" << _HEX(mac[3]) << ":" << _HEX(mac[4]) << ":"
+  << _HEX(mac[5]) << endl;
   sprintf(id, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
-          mac[4], mac[5]);
+  mac[4], mac[5]);
   Serial << "id: " << id << endl;
 }
 
@@ -276,23 +276,23 @@ void setupPubSub() {
 
 void publishValues() {
   if (pubSubClient.publish(publishVccTopic.c_str(),
-                           String(vcc).c_str())) {
+  String(vcc).c_str())) {
     Serial << " < " << publishVccTopic << ": " << vcc << endl;
   } else {
     Serial << "!< " << publishVccTopic << ": " << vcc << endl;
   }
   if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
-                         String(temperature).c_str())) {
-  Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
-} else {
-  Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
-}
-if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
-                         String(humidity).c_str())) {
-  Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
-} else {
-  Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
-}
+  String(temperature).c_str())) {
+    Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
+  } else {
+    Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
+  }
+  if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
+  String(humidity).c_str())) {
+    Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
+  } else {
+    Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
+  }
 }
 
 void setupTopic() {

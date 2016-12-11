@@ -63,3 +63,21 @@
 #
 # script:
 #     - platformio ci --lib="." --board=ID_1 --board=ID_2 --board=ID_N
+
+language: python
+python:
+    - "2.7"
+
+sudo: false
+cache:
+    directories:
+        - "~/.platformio"
+
+env:
+     - PLATFORMIO_CI_SRC=sonoffTH/src/main.cpp
+
+install:
+    - pip install -U platformio
+    - platformio lib -g install 31 64 19 1101 89 560 1265
+script:
+    - make travis-build
