@@ -102,7 +102,7 @@ void writeSwitchState() {
 
 void updater() {
   if (wifiAvailable) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", "sonoffTH.ino");
+    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", "firmware");
     switch (ret) {
       case HTTP_UPDATE_FAILED:
       Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
