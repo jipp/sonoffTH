@@ -11,6 +11,8 @@
 // gpio 13 -> blue LED
 // gpio 14 -> jack in
 
+//#define DEBUG
+
 #include <Streaming.h>
 #include <Ticker.h>
 #include <FS.h>
@@ -176,9 +178,12 @@ void readConfig() {
         configFile.readBytes(buf.get(), size);
         DynamicJsonBuffer jsonBuffer;
         JsonObject& json = jsonBuffer.parseObject(buf.get());
-        json.printTo(Serial);
+        #ifdef DEBUG
+        json.prettyPrintTo(Serial);
+        Serial << endl;
+        #endif
         if (json.success()) {
-          Serial << endl << "parsed json" << endl;
+          Serial << "parsed json" << endl;
           if (json.containsKey("mqtt_server") && json.containsKey("mqtt_username") && json.containsKey("mqtt_password")) {
             strcpy(mqtt_server, json["mqtt_server"]);
             strcpy(mqtt_username, json["mqtt_username"]);
@@ -217,7 +222,11 @@ void setupWiFiManager() {
   WiFiManagerParameter custom_mqtt_username("username", "mqtt username", mqtt_username, 16);
   WiFiManagerParameter custom_mqtt_password("password", "mqtt password", mqtt_password, 16);
   WiFiManager wifiManager;
+  #ifdef DEBUG
   wifiManager.setDebugOutput(true);
+  #else
+  wifiManager.setDebugOutput(false);
+  #endif
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&custom_mqtt_server);
   wifiManager.addParameter(&custom_mqtt_username);
