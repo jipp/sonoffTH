@@ -1,17 +1,11 @@
 #include <Arduino.h>
 
-// start gui when bottom pressed during startup
-// react better when mqtt is not working
-// add last will
-
 // sonoff TH16
 // 1M (64k SPIFFS)
 // gpio  0 -> button
 // gpio 12 -> relay and red LED
 // gpio 13 -> blue LED
 // gpio 14 -> jack in
-
-//#define DEBUG
 
 #include <Streaming.h>
 #include <Ticker.h>
@@ -26,29 +20,34 @@
 #include <EEPROM.h>
 #include <DHT.h>
 
+#define DEBUG
 #define BUTTON  0
 #define RELAY   12
 #define LED     13
 #define JACK    14
+#define DHTTYPE DHT22
+
+const int address = 0;
+const char file[]="/config.json";
+const unsigned long int timerMeasureIntervall = 600000l;
+const unsigned long int timerLastReconnect = 10000l;
+const unsigned long int timerButtonPressed = 3000l;
+
+ADC_MODE(ADC_VCC);
+
+Ticker ticker;
+PubSubClient pubSubClient;
+DHT dht(JACK, DHTTYPE);
+
 
 // ESP
-ADC_MODE(ADC_VCC);
 float vcc = 0.0;
-int address = 0;
 bool wifiAvailable = false;
-
-// Ticker
-Ticker ticker;
 
 // WiFiManager
 bool shouldSaveConfig = false;
-char file[]="/config.json";
-
-// WiFi
-WiFiClient client;
 
 // pubsub
-PubSubClient pubSubClient;
 char id[13];
 char mqtt_server[40];
 char mqtt_username[16];
@@ -58,11 +57,8 @@ String publishSwitchTopic = "/switch/state";
 String publishVccTopic = "/vcc/value";
 String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
-unsigned long int timerMeasureIntervall = 10000l;
 unsigned long int timerMeasureIntervallStart = 0l;
-unsigned long int timerLastReconnect = 10000l;
 unsigned long int timerLastReconnectStart = 0l;
-unsigned long int timerButtonPressed = 3000l;
 unsigned long int timerButtonPressedStart = 0l;
 
 // switch
@@ -72,26 +68,20 @@ bool currentState = HIGH;
 bool recentState = HIGH;
 
 // DHT
-#define DHTTYPE DHT22
-DHT dht(JACK, DHTTYPE);
 float temperature = 0.0;
 float humidity = 0.0;
 
 
-void tick() {
-  int state = digitalRead(LED);
+void tick();
+void saveConfigCallback ();
+void setupPubSub();
 
-  digitalWrite(LED, !state);
-}
-
-void saveConfigCallback () {
-  shouldSaveConfig = true;
-  Serial << "Should save config" << endl;
-}
 
 void resetESP() {
   WiFiManager wifiManager;
+
   Serial << "reset" << endl;
+  SPIFFS.format();
   wifiManager.resetSettings();
   yield();
   ESP.reset();
@@ -277,12 +267,6 @@ void setupID() {
   Serial << "id: " << id << endl;
 }
 
-void setupPubSub() {
-  pubSubClient.setClient(client);
-  pubSubClient.setServer(mqtt_server, 1883);
-  pubSubClient.setCallback(callback);
-}
-
 void publishValues() {
   if (pubSubClient.publish(publishVccTopic.c_str(),
   String(vcc).c_str())) {
@@ -389,4 +373,25 @@ void loop() {
       }
     }
   }
+}
+
+
+
+void tick() {
+  int state = digitalRead(LED);
+
+  digitalWrite(LED, !state);
+}
+
+void saveConfigCallback () {
+  shouldSaveConfig = true;
+  Serial << "Should save config" << endl;
+}
+
+void setupPubSub() {
+  WiFiClient client;
+
+  pubSubClient.setClient(client);
+  pubSubClient.setServer(mqtt_server, 1883);
+  pubSubClient.setCallback(callback);
 }
