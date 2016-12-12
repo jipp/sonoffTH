@@ -68,7 +68,6 @@ language: python
 python:
     - "2.7"
 
-sudo: false
 cache:
     directories:
         - "~/.platformio"
@@ -81,4 +80,4 @@ install:
     - platformio lib -g install 31 64 19 1101 89 560 1265
 
 script:
-    - platformio ci
+    - platformio run
