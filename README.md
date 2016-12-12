@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/jipp/sonoffTH.svg?branch=master)](https://travis-ci.org/jipp/sonoffTH)
 
 # sonoffTH
-ESP based firmware for the sonoffTH.
+Firmware for the sonoffTH (based on ESP8266).
 
 ## The following features are implemented
 * start WiFiManager if wifi access is not possible
