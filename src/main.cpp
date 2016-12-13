@@ -1,11 +1,13 @@
 #include <Arduino.h>
 
+
 // sonoff TH16
 // 1M (64k SPIFFS)
 // gpio  0 -> button
 // gpio 12 -> relay and red LED
 // gpio 13 -> blue LED
 // gpio 14 -> jack in
+
 
 #include <Streaming.h>
 #include <Ticker.h>
@@ -20,6 +22,8 @@
 #include <EEPROM.h>
 #include <DHT.h>
 
+
+// defines
 #define DEBUG
 #define BUTTON  0
 #define RELAY   12
@@ -27,27 +31,47 @@
 #define JACK    14
 #define DHTTYPE DHT22
 
+
+// constants
 const int address = 0;
 const char file[]="/config.json";
 const unsigned long int timerMeasureIntervall = 600000l;
 const unsigned long int timerLastReconnect = 10000l;
 const unsigned long int timerButtonPressed = 3000l;
+const int mqtt_port = 1880;
 
+
+// switch adc port to monitor vcc
 ADC_MODE(ADC_VCC);
 
+
+// global definitions
 Ticker ticker;
 PubSubClient pubSubClient;
 DHT dht(JACK, DHTTYPE);
 
 
-// ESP
+// callback functions
+void tick();
+void saveConfigCallback ();
+void callback(char*, byte* , unsigned int);
+
+
+// functions
+void setupHardware();
+void readSwitchStateEEPROM();
+void writeSwitchStateEEPROM();
+void setupPubSub();
+void checkForConfigReset();
+void resetConfig();
+void publishSwitchState(char);
+
+
+//
 float vcc = 0.0;
 bool wifiAvailable = false;
-
-// WiFiManager
+bool mqttAvailable = false;
 bool shouldSaveConfig = false;
-
-// pubsub
 char id[13];
 char mqtt_server[40];
 char mqtt_username[16];
@@ -59,38 +83,14 @@ String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
 unsigned long int timerMeasureIntervallStart = 0l;
 unsigned long int timerLastReconnectStart = 0l;
-unsigned long int timerButtonPressedStart = 0l;
-
-// switch
 char switchState = '0';
 bool switchTransmit = true;
 bool currentState = HIGH;
 bool recentState = HIGH;
-
-// DHT
 float temperature = 0.0;
 float humidity = 0.0;
 
 
-void tick();
-void saveConfigCallback ();
-void setupPubSub();
-
-
-void resetESP() {
-  WiFiManager wifiManager;
-
-  Serial << "reset" << endl;
-  SPIFFS.format();
-  wifiManager.resetSettings();
-  yield();
-  ESP.reset();
-}
-
-void writeSwitchState() {
-  EEPROM.write(address, switchState);
-  EEPROM.commit();
-}
 
 void updater() {
   if (wifiAvailable) {
@@ -107,51 +107,6 @@ void updater() {
       break;
     }
   }
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial << "> " << topic << ": ";
-  for (unsigned int i = 0; i < length; i++) {
-    Serial << (char) payload[i];
-  }
-  Serial << endl;
-  switch (payload[0]) {
-    case '0':
-    if (switchState != '0') {
-      digitalWrite(RELAY, LOW);
-      switchState = '0';
-      switchTransmit = true;
-      writeSwitchState();
-    }
-    break;
-    case '1':
-    if (switchState != '1') {
-      digitalWrite(RELAY, HIGH);
-      switchState = '1';
-      switchTransmit = true;
-      writeSwitchState();
-    }
-    break;
-    case '2':
-    updater();
-    break;
-    case '3':
-    resetESP();
-    break;
-  }
-}
-
-void setupHardware() {
-  ticker.attach(0.3, tick);
-  Serial.begin(115200);
-  dht.begin();
-  pinMode(RELAY, OUTPUT);
-  pinMode(LED, OUTPUT);
-}
-
-void setupSwitchState() {
-  EEPROM.begin(512);
-  switchState = EEPROM.read(address);
 }
 
 void readConfig() {
@@ -296,33 +251,26 @@ void setupTopic() {
   publishHumidityTopic = id + publishHumidityTopic;
 }
 
-
-bool reconnect() {
+int reconnect() {
   Serial << "Attempting MQTT connection..." << endl;
   if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
     Serial << "connected" << endl;
-    pubSubClient.publish(publishSwitchTopic.c_str(), String(switchState).c_str());
-    Serial << " < " << publishSwitchTopic << ": " << switchState << endl;
+    publishSwitchState(switchState);
     pubSubClient.subscribe(subscribeSwitchTopic.c_str());
     Serial << " > " << subscribeSwitchTopic << endl;
   } else {
     Serial << "failed, rc=" << pubSubClient.state() << endl;
   }
-  return pubSubClient.connected();
+  return pubSubClient.state();
 }
 
 
 
 void setup() {
   setupHardware();
-  setupSwitchState();
+  readSwitchStateEEPROM();
+  checkForConfigReset();
   setupWiFiManager();
-  timerButtonPressedStart = millis();
-  while (digitalRead(BUTTON) == LOW) {
-    if (millis() - timerButtonPressedStart > timerButtonPressed) {
-      resetESP();
-    }
-  }
   updater();
   setupID();
   setupPubSub();
@@ -338,19 +286,19 @@ void loop() {
       digitalWrite(RELAY, LOW);
       switchState = '0';
       switchTransmit = true;
-      writeSwitchState();
+      writeSwitchStateEEPROM();
     } else {
       digitalWrite(RELAY, HIGH);
       switchState = '1';
       switchTransmit = true;
-      writeSwitchState();
+      writeSwitchStateEEPROM();
     }
   }
   recentState = currentState;
   if (wifiAvailable) {
-    if (!pubSubClient.connected()) {
+    if (pubSubClient.state() != 0) {        // crash as mqtt_... not defined
       if (millis() - timerLastReconnectStart > timerLastReconnect) {
-        if (reconnect()) {
+        if (reconnect() != 0) {
           timerLastReconnectStart = 0;
         } else {
           timerLastReconnectStart = millis();
@@ -359,12 +307,7 @@ void loop() {
     } else {
       pubSubClient.loop();
       if (switchTransmit) {
-        if (pubSubClient.publish(publishSwitchTopic.c_str(), String(switchState).c_str())) {
-          switchTransmit = false;
-          Serial << " < " << publishSwitchTopic << ": " << switchState << endl;
-        } else {
-          Serial << "!< " << publishSwitchTopic << ": " << switchState << endl;
-        }
+        publishSwitchState(switchState);
       }
       if (millis() - timerMeasureIntervallStart > timerMeasureIntervall) {
         timerMeasureIntervallStart = millis();
@@ -374,7 +317,6 @@ void loop() {
     }
   }
 }
-
 
 
 void tick() {
@@ -388,10 +330,92 @@ void saveConfigCallback () {
   Serial << "Should save config" << endl;
 }
 
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial << "> " << topic << ": ";
+  for (unsigned int i = 0; i < length; i++) {
+    Serial << (char) payload[i];
+  }
+  Serial << endl;
+  switch (payload[0]) {
+    case '0':
+    if (switchState != '0') {
+      digitalWrite(RELAY, LOW);
+      switchState = '0';
+      switchTransmit = true;
+      writeSwitchStateEEPROM();
+    }
+    break;
+    case '1':
+    if (switchState != '1') {
+      digitalWrite(RELAY, HIGH);
+      switchState = '1';
+      switchTransmit = true;
+      writeSwitchStateEEPROM();
+    }
+    break;
+    case '2':
+    updater();
+    break;
+    case '3':
+    resetConfig();
+    break;
+  }
+}
+
+void setupHardware() {
+  ticker.attach(0.3, tick);
+  Serial.begin(115200);
+  dht.begin();
+  pinMode(RELAY, OUTPUT);
+  pinMode(LED, OUTPUT);
+}
+
 void setupPubSub() {
   WiFiClient client;
 
   pubSubClient.setClient(client);
-  pubSubClient.setServer(mqtt_server, 1883);
+  pubSubClient.setServer(mqtt_server, mqtt_port);
   pubSubClient.setCallback(callback);
+  Serial << pubSubClient.state() << endl;
+}
+
+void readSwitchStateEEPROM() {
+  EEPROM.begin(512);
+  digitalWrite(RELAY, EEPROM.read(address));
+}
+
+void writeSwitchStateEEPROM() {
+  EEPROM.write(address, digitalRead(RELAY));
+  EEPROM.commit();
+}
+
+void publishSwitchState(char switchState) {
+  if (pubSubClient.publish(publishSwitchTopic.c_str(), String(switchState).c_str())) {
+    Serial << " < " << publishSwitchTopic << ": " << switchState << endl;
+  } else {
+    Serial << "!< " << publishSwitchTopic << ": " << switchState << endl;
+  }
+}
+
+void checkForConfigReset() {
+  unsigned long int timerButtonPressedStart =  millis();
+
+  Serial << "waiting for reset" << endl;
+  delay(1000);
+  while (digitalRead(BUTTON) == LOW) {
+    if (millis() - timerButtonPressedStart > timerButtonPressed) {
+      resetConfig();
+    }
+  }
+  Serial << "finished waiting" << endl;
+}
+
+void resetConfig() {
+  WiFiManager wifiManager;
+
+  Serial << "reset" << endl;
+  SPIFFS.format();
+  wifiManager.resetSettings();
+  delay(3000);
+  ESP.reset();
 }
