@@ -50,6 +50,7 @@ ADC_MODE(ADC_VCC);
 Ticker ticker;
 PubSubClient pubSubClient;
 DHT dht(JACK, DHTTYPE);
+WiFiClient client;
 
 
 // callback functions
@@ -298,8 +299,7 @@ void loop() {
   }
   recentState = currentState;
   if (wifiAvailable) {
-    if (!pubSubClient.connected()) {        // crash as mqtt_... not defined
-      Serial << "hello" << endl;
+    if (!pubSubClient.connected()) {
       if (millis() - timerLastReconnectStart > timerLastReconnect) {
         if (reconnect() != 0) {
           timerLastReconnectStart = 0;
@@ -375,8 +375,6 @@ void setupHardware() {
 }
 
 void setupPubSub() {
-  WiFiClient client;
-
   pubSubClient.setClient(client);
   pubSubClient.setServer(mqtt_server, mqtt_port);
   pubSubClient.setCallback(callback);
