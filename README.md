@@ -14,6 +14,8 @@ Firmware for the sonoffTH (based on ESP8266).
 * start WiFi gui when bottom pressed during startup
 * react better when mqtt broker is not responding
 * add last will for mqtt
+* parameter the OTA
+* CI for Project
 
 ## Additional files
 -
@@ -26,9 +28,6 @@ Firmware for the sonoffTH (based on ESP8266).
 * [ 89  ] PubSubClient
 * [ 560 ] Streaming
 * [1265 ] WiFiManager
-
-## OpenSCAD files included
--
 
 ## Info
 -

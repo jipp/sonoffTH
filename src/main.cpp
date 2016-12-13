@@ -25,7 +25,8 @@
 
 // defines
 #define DEBUG
-#define BUTTON  0
+#define BUTTON  4
+//#define BUTTON  0
 #define RELAY   12
 #define LED     13
 #define JACK    14
@@ -94,7 +95,7 @@ float humidity = 0.0;
 
 void updater() {
   if (wifiAvailable) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", "firmware");
+    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", VERSION);
     switch (ret) {
       case HTTP_UPDATE_FAILED:
       Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
@@ -293,10 +294,12 @@ void loop() {
       switchTransmit = true;
       writeSwitchStateEEPROM();
     }
+    Serial << "Switch state: " << switchState << endl;
   }
   recentState = currentState;
   if (wifiAvailable) {
-    if (pubSubClient.state() != 0) {        // crash as mqtt_... not defined
+    if (!pubSubClient.connected()) {        // crash as mqtt_... not defined
+      Serial << "hello" << endl;
       if (millis() - timerLastReconnectStart > timerLastReconnect) {
         if (reconnect() != 0) {
           timerLastReconnectStart = 0;
@@ -366,6 +369,7 @@ void setupHardware() {
   ticker.attach(0.3, tick);
   Serial.begin(115200);
   dht.begin();
+  pinMode(BUTTON, INPUT);
   pinMode(RELAY, OUTPUT);
   pinMode(LED, OUTPUT);
 }
@@ -376,7 +380,6 @@ void setupPubSub() {
   pubSubClient.setClient(client);
   pubSubClient.setServer(mqtt_server, mqtt_port);
   pubSubClient.setCallback(callback);
-  Serial << pubSubClient.state() << endl;
 }
 
 void readSwitchStateEEPROM() {
