@@ -39,7 +39,7 @@ const char file[]="/config.json";
 const unsigned long int timerMeasureIntervall = 600000l;
 const unsigned long int timerLastReconnect = 10000l;
 const unsigned long int timerButtonPressed = 3000l;
-const int mqtt_port = 1880;
+const int mqtt_port = 1883;
 
 
 // switch adc port to monitor vcc
