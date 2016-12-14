@@ -29,7 +29,8 @@ cache:
         - "~/.platformio"
 
 env:
-     - PLATFORMIO_CI_SRC=sonoffTH/src/main.cpp
+#     - PLATFORMIO_CI_SRC=sonoffTH/src/main.cpp
+     - PLATFORMIO_CI_SRC=sonoffTH/src/
 
 install:
     - pip install -U platformio
