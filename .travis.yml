@@ -36,5 +36,5 @@ install:
     - platformio lib -g install 31 64 19 1101 89 560 1265
 
 script:
-;    - platformio run
+#    - platformio run
     - platform ci --board=witty
