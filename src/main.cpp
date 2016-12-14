@@ -40,7 +40,7 @@
 // constants
 const int address = 0;
 const char file[]="/config.json";
-const unsigned long int timerMeasureIntervall = 600000l;
+const unsigned long int timerMeasureIntervall = 60000l;
 const unsigned long int timerLastReconnect = 60000l;
 const unsigned long int timerButtonPressed = 3000l;
 const int mqtt_port = 1883;
@@ -54,7 +54,12 @@ ADC_MODE(ADC_VCC);
 Ticker ticker;
 PubSubClient pubSubClient;
 DHT dht(JACK, DHTTYPE);
-WiFiClient client;
+WiFiClient wifiClient;
+
+
+// global variables
+bool shouldSaveConfig = false;
+char id[13];
 
 
 // callback functions
@@ -71,14 +76,14 @@ void setupPubSub();
 void checkForConfigReset();
 void resetConfig();
 void publishSwitchState();
+void setupID();
+void publishValues();
+bool reconnect();
+void updater();
+void finishSetup();
 
 
-//
-float vcc = 0.0;
-bool wifiAvailable = false;
-bool mqttAvailable = false;
-bool shouldSaveConfig = false;
-char id[13];
+// to be checked
 char mqtt_server[40];
 char mqtt_username[16];
 char mqtt_password[16];
@@ -92,27 +97,8 @@ unsigned long int timerLastReconnectStart = 0l;
 bool switchTransmit = true;
 bool currentState = HIGH;
 bool recentState = HIGH;
-float temperature = 0.0;
-float humidity = 0.0;
 
 
-
-void updater() {
-  if (wifiAvailable) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", VERSION);
-    switch (ret) {
-      case HTTP_UPDATE_FAILED:
-      Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
-      break;
-      case HTTP_UPDATE_NO_UPDATES:
-      Serial << "HTTP_UPDATE_NO_UPDATES" << endl;
-      break;
-      case HTTP_UPDATE_OK:
-      Serial << "HTTP_UPDATE_OK" << endl;
-      break;
-    }
-  }
-}
 
 void readConfig() {
   Serial << "mounting FS..." << endl;
@@ -160,7 +146,10 @@ void saveConfig() {
   if (!configFile) {
     Serial << "failed to open config file for writing" << endl;
   }
-  json.printTo(Serial);
+  #ifdef VERBOSE
+  json.prettyPrintTo(Serial);
+  Serial << endl;
+  #endif
   json.printTo(configFile);
   configFile.close();
 }
@@ -186,9 +175,7 @@ void setupWiFiManager() {
   wifiManager.setTimeout(180);
   if (!wifiManager.autoConnect("AutoConnectAP")) {
     Serial << "failed to connect and hit timeout" << endl;
-    wifiAvailable = false;
   } else {
-    wifiAvailable = true;
     Serial << "connected...yeey :)" << endl;
     strcpy(mqtt_server, custom_mqtt_server.getValue());
     strcpy(mqtt_username, custom_mqtt_username.getValue());
@@ -200,51 +187,6 @@ void setupWiFiManager() {
   }
 }
 
-void measureValues() {
-  vcc = ESP.getVcc();
-  temperature = dht.readTemperature();
-  humidity = dht.readHumidity();
-}
-
-void finishSetup() {
-  if (wifiAvailable) {
-    ticker.detach();
-  } else {
-    ticker.attach(0.5, tick);
-  }
-  digitalWrite(LED, LOW);
-}
-
-void setupID() {
-  byte mac[6];
-
-  WiFi.macAddress(mac);
-  sprintf(id, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
-  mac[4], mac[5]);
-  Serial << "id: " << id << endl;
-}
-
-void publishValues() {
-  if (pubSubClient.publish(publishVccTopic.c_str(),
-  String(vcc).c_str())) {
-    Serial << " < " << publishVccTopic << ": " << vcc << endl;
-  } else {
-    Serial << "!< " << publishVccTopic << ": " << vcc << endl;
-  }
-  if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
-  String(temperature).c_str())) {
-    Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
-  } else {
-    Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
-  }
-  if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
-  String(humidity).c_str())) {
-    Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
-  } else {
-    Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
-  }
-}
-
 void setupTopic() {
   subscribeSwitchTopic = id + subscribeSwitchTopic;
   publishSwitchTopic = id + publishSwitchTopic;
@@ -253,24 +195,10 @@ void setupTopic() {
   publishHumidityTopic = id + publishHumidityTopic;
 }
 
-int reconnect() {
-  Serial << "Attempting MQTT connection..." << endl;
-  if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
-    Serial << "connected" << endl;
-    publishSwitchState();
-    pubSubClient.subscribe(subscribeSwitchTopic.c_str());
-    Serial << " > " << subscribeSwitchTopic << endl;
-  } else {
-    Serial << "failed, rc=" << pubSubClient.state() << endl;
-  }
-  return pubSubClient.connected();
-}
-
 
 
 void setup() {
   setupHardware();
-  Serial << "\n\n\n\n" << VERSION << endl;
   readSwitchStateEEPROM();
   checkForConfigReset();
   setupWiFiManager();
@@ -287,26 +215,31 @@ void loop() {
     delay(250);
     digitalWrite(RELAY, !digitalRead(RELAY));
     writeSwitchStateEEPROM();
-    publishSwitchState();
+    switchTransmit = true;
     Serial << "Switch state: " << digitalRead(RELAY) << endl;
   }
   recentState = currentState;
-  if (wifiAvailable) {
+  if (WiFi.status() == WL_CONNECTED) {
     if (!pubSubClient.connected()) {
       if (millis() - timerLastReconnectStart > timerLastReconnect) {
         timerLastReconnectStart = millis();
         if (reconnect()) {
           timerLastReconnectStart = 0;
+          Serial << "connected" << endl;
+          ticker.detach();
+        } else {
+          Serial << "not connected" << endl;
+          ticker.attach(1.0, tick);
         }
       }
     } else {
       pubSubClient.loop();
       if (switchTransmit) {
         publishSwitchState();
+        switchTransmit = false;
       }
       if (millis() - timerMeasureIntervallStart > timerMeasureIntervall) {
         timerMeasureIntervallStart = millis();
-        measureValues();
         publishValues();
       }
     }
@@ -352,6 +285,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setupHardware() {
   ticker.attach(0.3, tick);
   Serial.begin(115200);
+  Serial << endl << endl << "Version: " << VERSION << endl;
   dht.begin();
   pinMode(BUTTON, INPUT);
   pinMode(RELAY, OUTPUT);
@@ -359,7 +293,7 @@ void setupHardware() {
 }
 
 void setupPubSub() {
-  pubSubClient.setClient(client);
+  pubSubClient.setClient(wifiClient);
   pubSubClient.setServer(mqtt_server, mqtt_port);
   pubSubClient.setCallback(callback);
 }
@@ -405,4 +339,77 @@ void resetConfig() {
   wifiManager.resetSettings();
   delay(3000);
   ESP.reset();
+}
+
+void setupID() {
+  byte mac[6];
+
+  WiFi.macAddress(mac);
+  sprintf(id, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
+  mac[4], mac[5]);
+  Serial << "id: " << id << endl;
+}
+
+void publishValues() {
+  unsigned int vcc = ESP.getVcc();
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  if (pubSubClient.publish(publishVccTopic.c_str(),
+  String(vcc).c_str())) {
+    Serial << " < " << publishVccTopic << ": " << vcc << endl;
+  } else {
+    Serial << "!< " << publishVccTopic << ": " << vcc << endl;
+  }
+  if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
+  String(temperature).c_str())) {
+    Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
+  } else {
+    Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
+  }
+  if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
+  String(humidity).c_str())) {
+    Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
+  } else {
+    Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
+  }
+}
+
+bool reconnect() {
+  Serial << "Attempting MQTT connection..." << endl;
+  if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
+    Serial << "connected" << endl;
+    publishSwitchState();
+    pubSubClient.subscribe(subscribeSwitchTopic.c_str());
+    Serial << " > " << subscribeSwitchTopic << endl;
+  } else {
+    Serial << "failed, rc=" << pubSubClient.state() << endl;
+  }
+  return pubSubClient.connected();
+}
+
+void updater() {
+  if (WiFi.status() == WL_CONNECTED) {
+    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", VERSION);
+    switch (ret) {
+      case HTTP_UPDATE_FAILED:
+      Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
+      break;
+      case HTTP_UPDATE_NO_UPDATES:
+      Serial << "HTTP_UPDATE_NO_UPDATES" << endl;
+      break;
+      case HTTP_UPDATE_OK:
+      Serial << "HTTP_UPDATE_OK" << endl;
+      break;
+    }
+  }
+}
+
+void finishSetup() {
+  if (WiFi.status() == WL_CONNECTED) {
+    ticker.detach();
+  } else {
+    ticker.attach(0.5, tick);
+  }
+  digitalWrite(LED, LOW);
 }
