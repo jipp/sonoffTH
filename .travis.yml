@@ -37,4 +37,4 @@ install:
 
 script:
 #    - platformio run
-    - platform ci --board=witty
+    - platformio ci --board=witty
