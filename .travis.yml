@@ -37,5 +37,5 @@ install:
 
 script:
 #    - platformio run
-    - platformio ci --project-conf=sonoffTH/platformio.ini
+    - platformio ci --project-conf=platformio.ini
 #    - platformio ci --board=huzzah
