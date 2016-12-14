@@ -24,11 +24,15 @@
 
 
 // defines
-#define DEBUG
-#define BUTTON  4
-//#define BUTTON  0
+#ifndef BUTTON
+#define BUTTON  0
+#endif
+#ifndef RELAY
 #define RELAY   12
+#endif
+#ifndef LED
 #define LED     13
+#endif
 #define JACK    14
 #define DHTTYPE DHT22
 
@@ -37,7 +41,7 @@
 const int address = 0;
 const char file[]="/config.json";
 const unsigned long int timerMeasureIntervall = 600000l;
-const unsigned long int timerLastReconnect = 10000l;
+const unsigned long int timerLastReconnect = 60000l;
 const unsigned long int timerButtonPressed = 3000l;
 const int mqtt_port = 1883;
 
@@ -66,7 +70,7 @@ void writeSwitchStateEEPROM();
 void setupPubSub();
 void checkForConfigReset();
 void resetConfig();
-void publishSwitchState(char);
+void publishSwitchState();
 
 
 //
@@ -85,7 +89,6 @@ String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
 unsigned long int timerMeasureIntervallStart = 0l;
 unsigned long int timerLastReconnectStart = 0l;
-char switchState = '0';
 bool switchTransmit = true;
 bool currentState = HIGH;
 bool recentState = HIGH;
@@ -125,7 +128,7 @@ void readConfig() {
         configFile.readBytes(buf.get(), size);
         DynamicJsonBuffer jsonBuffer;
         JsonObject& json = jsonBuffer.parseObject(buf.get());
-        #ifdef DEBUG
+        #ifdef VERBOSE
         json.prettyPrintTo(Serial);
         Serial << endl;
         #endif
@@ -169,7 +172,7 @@ void setupWiFiManager() {
   WiFiManagerParameter custom_mqtt_username("username", "mqtt username", mqtt_username, 16);
   WiFiManagerParameter custom_mqtt_password("password", "mqtt password", mqtt_password, 16);
   WiFiManager wifiManager;
-  #ifdef DEBUG
+  #ifdef VERBOSE
   wifiManager.setDebugOutput(true);
   #else
   wifiManager.setDebugOutput(false);
@@ -216,9 +219,6 @@ void setupID() {
   byte mac[6];
 
   WiFi.macAddress(mac);
-  Serial << "Mac: " << _HEX(mac[0]) << ":" << _HEX(mac[1]) << ":"
-  << _HEX(mac[2]) << ":" << _HEX(mac[3]) << ":" << _HEX(mac[4]) << ":"
-  << _HEX(mac[5]) << endl;
   sprintf(id, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
   mac[4], mac[5]);
   Serial << "id: " << id << endl;
@@ -257,19 +257,20 @@ int reconnect() {
   Serial << "Attempting MQTT connection..." << endl;
   if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
     Serial << "connected" << endl;
-    publishSwitchState(switchState);
+    publishSwitchState();
     pubSubClient.subscribe(subscribeSwitchTopic.c_str());
     Serial << " > " << subscribeSwitchTopic << endl;
   } else {
     Serial << "failed, rc=" << pubSubClient.state() << endl;
   }
-  return pubSubClient.state();
+  return pubSubClient.connected();
 }
 
 
 
 void setup() {
   setupHardware();
+  Serial << "\n\n\n\n" << VERSION << endl;
   readSwitchStateEEPROM();
   checkForConfigReset();
   setupWiFiManager();
@@ -284,33 +285,24 @@ void loop() {
   currentState = digitalRead(BUTTON);
   if ((currentState == LOW) and (recentState == HIGH)) {
     delay(250);
-    if (switchState == '1') {
-      digitalWrite(RELAY, LOW);
-      switchState = '0';
-      switchTransmit = true;
-      writeSwitchStateEEPROM();
-    } else {
-      digitalWrite(RELAY, HIGH);
-      switchState = '1';
-      switchTransmit = true;
-      writeSwitchStateEEPROM();
-    }
-    Serial << "Switch state: " << switchState << endl;
+    digitalWrite(RELAY, !digitalRead(RELAY));
+    writeSwitchStateEEPROM();
+    publishSwitchState();
+    Serial << "Switch state: " << digitalRead(RELAY) << endl;
   }
   recentState = currentState;
   if (wifiAvailable) {
     if (!pubSubClient.connected()) {
       if (millis() - timerLastReconnectStart > timerLastReconnect) {
-        if (reconnect() != 0) {
+        timerLastReconnectStart = millis();
+        if (reconnect()) {
           timerLastReconnectStart = 0;
-        } else {
-          timerLastReconnectStart = millis();
         }
       }
     } else {
       pubSubClient.loop();
       if (switchTransmit) {
-        publishSwitchState(switchState);
+        publishSwitchState();
       }
       if (millis() - timerMeasureIntervallStart > timerMeasureIntervall) {
         timerMeasureIntervallStart = millis();
@@ -341,26 +333,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial << endl;
   switch (payload[0]) {
     case '0':
-    if (switchState != '0') {
+    if (digitalRead(RELAY) != LOW) {
       digitalWrite(RELAY, LOW);
-      switchState = '0';
       switchTransmit = true;
       writeSwitchStateEEPROM();
     }
     break;
     case '1':
-    if (switchState != '1') {
+    if (digitalRead(RELAY) != HIGH) {
       digitalWrite(RELAY, HIGH);
-      switchState = '1';
       switchTransmit = true;
       writeSwitchStateEEPROM();
     }
-    break;
-    case '2':
-    updater();
-    break;
-    case '3':
-    resetConfig();
     break;
   }
 }
@@ -390,11 +374,13 @@ void writeSwitchStateEEPROM() {
   EEPROM.commit();
 }
 
-void publishSwitchState(char switchState) {
-  if (pubSubClient.publish(publishSwitchTopic.c_str(), String(switchState).c_str())) {
-    Serial << " < " << publishSwitchTopic << ": " << switchState << endl;
+void publishSwitchState() {
+  bool state = digitalRead(RELAY);
+
+  if (pubSubClient.publish(publishSwitchTopic.c_str(), String(state).c_str())) {
+    Serial << " < " << publishSwitchTopic << ": " << state << endl;
   } else {
-    Serial << "!< " << publishSwitchTopic << ": " << switchState << endl;
+    Serial << "!< " << publishSwitchTopic << ": " << state << endl;
   }
 }
 
