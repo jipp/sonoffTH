@@ -9,9 +9,9 @@ Firmware for the sonoffTH (based on ESP8266).
 * LED blink shows progress
 * manual switch by pressing bottom
 * OTA update from webserver (requested by device)
+* reset settings when buttom pressed during startup
 
 ## The following features are in progress
-* start WiFi gui when bottom pressed during startup
 * react better when mqtt broker is not responding
 * add last will for mqtt
 * parameter the OTA

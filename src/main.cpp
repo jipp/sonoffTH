@@ -81,6 +81,7 @@ void publishValues();
 bool reconnect();
 void updater();
 void finishSetup();
+void setupTopic();
 
 
 // to be checked
@@ -187,14 +188,6 @@ void setupWiFiManager() {
   }
 }
 
-void setupTopic() {
-  subscribeSwitchTopic = id + subscribeSwitchTopic;
-  publishSwitchTopic = id + publishSwitchTopic;
-  publishVccTopic = id + publishVccTopic;
-  publishTemperatureTopic = id + publishTemperatureTopic;
-  publishHumidityTopic = id + publishHumidityTopic;
-}
-
 
 
 void setup() {
@@ -207,21 +200,13 @@ void setup() {
   setupPubSub();
   setupTopic();
   finishSetup();
+  timerLastReconnectStart = timerLastReconnect + millis();
 }
 
 void loop() {
-  currentState = digitalRead(BUTTON);
-  if ((currentState == LOW) and (recentState == HIGH)) {
-    delay(250);
-    digitalWrite(RELAY, !digitalRead(RELAY));
-    writeSwitchStateEEPROM();
-    switchTransmit = true;
-    Serial << "Switch state: " << digitalRead(RELAY) << endl;
-  }
-  recentState = currentState;
   if (WiFi.status() == WL_CONNECTED) {
     if (!pubSubClient.connected()) {
-      if (millis() - timerLastReconnectStart > timerLastReconnect) {
+      if (abs(millis() - timerLastReconnectStart) > timerLastReconnect) {
         timerLastReconnectStart = millis();
         if (reconnect()) {
           timerLastReconnectStart = 0;
@@ -244,6 +229,15 @@ void loop() {
       }
     }
   }
+  currentState = digitalRead(BUTTON);
+  if ((currentState == LOW) and (recentState == HIGH)) {
+    delay(250);
+    digitalWrite(RELAY, !digitalRead(RELAY));
+    writeSwitchStateEEPROM();
+    switchTransmit = true;
+    Serial << "Switch state: " << digitalRead(RELAY) << endl;
+  }
+  recentState = currentState;
 }
 
 
@@ -259,7 +253,7 @@ void saveConfigCallback () {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial << "> " << topic << ": ";
+  Serial << " > " << topic << ": ";
   for (unsigned int i = 0; i < length; i++) {
     Serial << (char) payload[i];
   }
@@ -378,7 +372,7 @@ void publishValues() {
 bool reconnect() {
   Serial << "Attempting MQTT connection..." << endl;
   if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
-    Serial << "connected" << endl;
+    Serial << "reconnected" << endl;
     publishSwitchState();
     pubSubClient.subscribe(subscribeSwitchTopic.c_str());
     Serial << " > " << subscribeSwitchTopic << endl;
@@ -412,4 +406,12 @@ void finishSetup() {
     ticker.attach(0.5, tick);
   }
   digitalWrite(LED, LOW);
+}
+
+void setupTopic() {
+  subscribeSwitchTopic = id + subscribeSwitchTopic;
+  publishSwitchTopic = id + publishSwitchTopic;
+  publishVccTopic = id + publishVccTopic;
+  publishTemperatureTopic = id + publishTemperatureTopic;
+  publishHumidityTopic = id + publishHumidityTopic;
 }
