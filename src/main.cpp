@@ -78,7 +78,7 @@ void resetConfig();
 void publishSwitchState();
 void setupID();
 void publishValues();
-bool reconnect();
+bool connect();
 void updater();
 void finishSetup();
 void setupTopic();
@@ -177,7 +177,7 @@ void setupWiFiManager() {
   if (!wifiManager.autoConnect("AutoConnectAP")) {
     Serial << "failed to connect and hit timeout" << endl;
   } else {
-    Serial << "connected...yeey :)" << endl;
+    Serial << "WiFi connected" << endl;
     strcpy(mqtt_server, custom_mqtt_server.getValue());
     strcpy(mqtt_username, custom_mqtt_username.getValue());
     strcpy(mqtt_password, custom_mqtt_password.getValue());
@@ -200,15 +200,15 @@ void setup() {
   setupPubSub();
   setupTopic();
   finishSetup();
-  timerLastReconnectStart = timerLastReconnect + millis();
+  connect();
 }
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     if (!pubSubClient.connected()) {
-      if (abs(millis() - timerLastReconnectStart) > timerLastReconnect) {
+      if (millis() - timerLastReconnectStart > timerLastReconnect) {
         timerLastReconnectStart = millis();
-        if (reconnect()) {
+        if (connect()) {
           timerLastReconnectStart = 0;
           Serial << "connected" << endl;
           ticker.detach();
@@ -333,6 +333,13 @@ void resetConfig() {
   wifiManager.resetSettings();
   delay(3000);
   ESP.reset();
+/*  wifiManager.setTimeout(180);
+  if (!wifiManager.startConfigPortal("OnDemandAP")) {
+    Serial.println("failed to connect and hit timeout");
+    delay(3000);
+    ESP.reset();
+    delay(5000);
+  }*/
 }
 
 void setupID() {
@@ -369,10 +376,10 @@ void publishValues() {
   }
 }
 
-bool reconnect() {
+bool connect() {
   Serial << "Attempting MQTT connection..." << endl;
   if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
-    Serial << "reconnected" << endl;
+    Serial << "connected, rc=" << pubSubClient.state() << endl;
     publishSwitchState();
     pubSubClient.subscribe(subscribeSwitchTopic.c_str());
     Serial << " > " << subscribeSwitchTopic << endl;

@@ -30,7 +30,6 @@ cache:
 
 env:
      - PLATFORMIO_CI_SRC=sonoffTH/src/main.cpp
-     - PLATFORMIO_CI_SRC=sonoffTH/src/
 
 install:
     - pip install -U platformio
@@ -38,3 +37,4 @@ install:
 
 script:
     - platformio run
+    - platformio ci --board=huzzah
