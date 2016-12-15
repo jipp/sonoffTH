@@ -95,7 +95,7 @@ String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
 unsigned long int timerMeasureIntervallStart = 0l;
 unsigned long int timerLastReconnectStart = 0l;
-bool switchTransmit = true;
+bool switchTransmit = false;
 bool currentState = HIGH;
 bool recentState = HIGH;
 
@@ -258,21 +258,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial << (char) payload[i];
   }
   Serial << endl;
-  switch (payload[0]) {
-    case '0':
-    if (digitalRead(RELAY) != LOW) {
-      digitalWrite(RELAY, LOW);
-      switchTransmit = true;
-      writeSwitchStateEEPROM();
-    }
-    break;
-    case '1':
-    if (digitalRead(RELAY) != HIGH) {
-      digitalWrite(RELAY, HIGH);
-      switchTransmit = true;
-      writeSwitchStateEEPROM();
-    }
-    break;
+  if ((payload[0] == '0' ? false : true) != digitalRead(RELAY)) {
+    digitalWrite(RELAY, !digitalRead(RELAY));
+    publishSwitchState();
+    writeSwitchStateEEPROM();
   }
 }
 
@@ -382,7 +371,6 @@ bool connect() {
     Serial << "connected, rc=" << pubSubClient.state() << endl;
     publishSwitchState();
     pubSubClient.subscribe(subscribeSwitchTopic.c_str());
-    Serial << " > " << subscribeSwitchTopic << endl;
   } else {
     Serial << "failed, rc=" << pubSubClient.state() << endl;
   }
