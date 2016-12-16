@@ -1,14 +1,6 @@
 #include <Arduino.h>
 
-
-// sonoff TH16
-// 1M (64k SPIFFS)
-// gpio  0 -> button
-// gpio 12 -> relay and red LED
-// gpio 13 -> blue LED
-// gpio 14 -> jack in
-
-
+// libaries
 #include <Streaming.h>
 #include <Ticker.h>
 #include <FS.h>
@@ -40,10 +32,11 @@
 // constants
 const int address = 0;
 const char file[]="/config.json";
-const unsigned long int timerMeasureIntervall = 60000l;
-const unsigned long int timerLastReconnect = 60000l;
-const unsigned long int timerButtonPressed = 3000l;
+const unsigned long int timerMeasureIntervall = 60l;
+const unsigned long int timerLastReconnect = 60l;
+const unsigned long int timerButtonPressed = 3l;
 const int mqtt_port = 1883;
+const unsigned long timerDeepSleep = 60l;
 
 
 // switch adc port to monitor vcc
@@ -82,6 +75,7 @@ bool connect();
 void updater();
 void finishSetup();
 void setupTopic();
+void shutPubSub();
 
 
 // to be checked
@@ -95,7 +89,6 @@ String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
 unsigned long int timerMeasureIntervallStart = 0l;
 unsigned long int timerLastReconnectStart = 0l;
-bool switchTransmit = false;
 bool currentState = HIGH;
 bool recentState = HIGH;
 
@@ -201,29 +194,26 @@ void setup() {
   setupTopic();
   finishSetup();
   connect();
+  #ifdef DEEPSLEEP
+  Serial << "going to sleep" << endl;
+  shutPubSub();
+  delay(1000);
+  ESP.deepSleep(timerDeepSleep * 1000000);
+  #endif
 }
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     if (!pubSubClient.connected()) {
-      if (millis() - timerLastReconnectStart > timerLastReconnect) {
+      if (millis() - timerLastReconnectStart > timerLastReconnect * 1000) {
         timerLastReconnectStart = millis();
         if (connect()) {
           timerLastReconnectStart = 0;
-          Serial << "connected" << endl;
-          ticker.detach();
-        } else {
-          Serial << "not connected" << endl;
-          ticker.attach(1.0, tick);
         }
       }
     } else {
       pubSubClient.loop();
-      if (switchTransmit) {
-        publishSwitchState();
-        switchTransmit = false;
-      }
-      if (millis() - timerMeasureIntervallStart > timerMeasureIntervall) {
+      if (millis() - timerMeasureIntervallStart > timerMeasureIntervall * 1000) {
         timerMeasureIntervallStart = millis();
         publishValues();
       }
@@ -234,7 +224,7 @@ void loop() {
     delay(250);
     digitalWrite(RELAY, !digitalRead(RELAY));
     writeSwitchStateEEPROM();
-    switchTransmit = true;
+    publishSwitchState();
     Serial << "Switch state: " << digitalRead(RELAY) << endl;
   }
   recentState = currentState;
@@ -294,10 +284,12 @@ void writeSwitchStateEEPROM() {
 void publishSwitchState() {
   bool state = digitalRead(RELAY);
 
-  if (pubSubClient.publish(publishSwitchTopic.c_str(), String(state).c_str())) {
-    Serial << " < " << publishSwitchTopic << ": " << state << endl;
-  } else {
-    Serial << "!< " << publishSwitchTopic << ": " << state << endl;
+  if (pubSubClient.connected()) {
+    if (pubSubClient.publish(publishSwitchTopic.c_str(), String(state).c_str())) {
+      Serial << " < " << publishSwitchTopic << ": " << state << endl;
+    } else {
+      Serial << "!< " << publishSwitchTopic << ": " << state << endl;
+    }
   }
 }
 
@@ -307,7 +299,7 @@ void checkForConfigReset() {
   Serial << "waiting for reset" << endl;
   delay(1000);
   while (digitalRead(BUTTON) == LOW) {
-    if (millis() - timerButtonPressedStart > timerButtonPressed) {
+    if (millis() - timerButtonPressedStart > timerButtonPressed * 1000) {
       resetConfig();
     }
   }
@@ -322,13 +314,13 @@ void resetConfig() {
   wifiManager.resetSettings();
   delay(3000);
   ESP.reset();
-/*  wifiManager.setTimeout(180);
+  /*  wifiManager.setTimeout(180);
   if (!wifiManager.startConfigPortal("OnDemandAP")) {
-    Serial.println("failed to connect and hit timeout");
-    delay(3000);
-    ESP.reset();
-    delay(5000);
-  }*/
+  Serial.println("failed to connect and hit timeout");
+  delay(3000);
+  ESP.reset();
+  delay(5000);
+}*/
 }
 
 void setupID() {
@@ -345,34 +337,39 @@ void publishValues() {
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
 
-  if (pubSubClient.publish(publishVccTopic.c_str(),
-  String(vcc).c_str())) {
-    Serial << " < " << publishVccTopic << ": " << vcc << endl;
-  } else {
-    Serial << "!< " << publishVccTopic << ": " << vcc << endl;
-  }
-  if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
-  String(temperature).c_str())) {
-    Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
-  } else {
-    Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
-  }
-  if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
-  String(humidity).c_str())) {
-    Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
-  } else {
-    Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
+  if (pubSubClient.connected()) {
+    if (pubSubClient.publish(publishVccTopic.c_str(),
+    String(vcc).c_str())) {
+      Serial << " < " << publishVccTopic << ": " << vcc << endl;
+    } else {
+      Serial << "!< " << publishVccTopic << ": " << vcc << endl;
+    }
+    if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
+    String(temperature).c_str())) {
+      Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
+    } else {
+      Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
+    }
+    if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
+    String(humidity).c_str())) {
+      Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
+    } else {
+      Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
+    }
   }
 }
 
 bool connect() {
-  Serial << "Attempting MQTT connection..." << endl;
+  Serial << "Attempting MQTT connection (~5s) ..." << endl;
   if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
     Serial << "connected, rc=" << pubSubClient.state() << endl;
     publishSwitchState();
+    publishValues();
     pubSubClient.subscribe(subscribeSwitchTopic.c_str());
+    ticker.detach();
   } else {
     Serial << "failed, rc=" << pubSubClient.state() << endl;
+    ticker.attach(1.0, tick);
   }
   return pubSubClient.connected();
 }
@@ -409,4 +406,11 @@ void setupTopic() {
   publishVccTopic = id + publishVccTopic;
   publishTemperatureTopic = id + publishTemperatureTopic;
   publishHumidityTopic = id + publishHumidityTopic;
+}
+
+void shutPubSub() {
+  if (pubSubClient.connected()) {
+    pubSubClient.unsubscribe(subscribeSwitchTopic.c_str());
+    pubSubClient.disconnect();
+  }
 }

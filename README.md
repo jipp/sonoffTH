@@ -31,4 +31,10 @@ Firmware for the sonoffTH (based on ESP8266).
 * [1265 ] WiFiManager
 
 ## Info
--
+settings for the sonoffTH
+
+* ESP8266: 1M (64k SPIFFS)
+* gpio 0 -> button
+* gpio 12 -> relay and red LED
+* gpio 13 -> blue LED
+* gpio 14 -> jack in
