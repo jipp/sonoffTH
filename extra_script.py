@@ -1,4 +1,6 @@
 Import("env")
+import os
+from stat import *
 
 def before_upload(source, target, env):
     print "before_upload"
@@ -11,7 +13,9 @@ def after_upload(source, target, env):
 
 
 def after_bin(source, target, env):
+    st = os.stat(source)
     print "after_bin"
+    print "file size: ", st[ST_SIZE]
     # do some actions
 
 

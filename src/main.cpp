@@ -397,7 +397,7 @@ void finishSetup() {
   } else {
     ticker.attach(0.5, tick);
   }
-  digitalWrite(LED, LOW);
+  digitalWrite(LED, HIGH);
 }
 
 void setupTopic() {
