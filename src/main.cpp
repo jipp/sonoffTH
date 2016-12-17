@@ -25,7 +25,9 @@
 #ifndef LED
 #define LED     13
 #endif
+#ifndef JACK
 #define JACK    14
+#endif
 #define DHTTYPE DHT22
 
 

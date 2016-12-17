@@ -17,6 +17,7 @@ Firmware for the sonoffTH (based on ESP8266).
 * parameter the OTA
 * CI for Project
 * maybe start ondemand wifi instead of resetting all settings
+* incase mqtt dies in operation, reconnect when switch changes
 
 ## Additional files
 -
