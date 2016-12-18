@@ -12,7 +12,7 @@ Firmware for the sonoffTH (based on ESP8266).
 * reset settings when buttom pressed during startup
 
 ## The following features are in progress
-* react better when mqtt broker is not responding
+* react better when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
 * add last will for mqtt
 * parameter the OTA
 * CI for Project
@@ -36,6 +36,8 @@ Firmware for the sonoffTH (based on ESP8266).
 settings for the sonoffTH
 
 * ESP8266: 1M (64k SPIFFS)
+
+## gpio settings used by default
 * gpio 0 -> button
 * gpio 12 -> relay and red LED
 * gpio 13 -> blue LED
