@@ -323,11 +323,11 @@ void resetConfig() {
   ESP.reset();
   /*  wifiManager.setTimeout(180);
   if (!wifiManager.startConfigPortal("OnDemandAP")) {
-  Serial.println("failed to connect and hit timeout");
-  delay(3000);
-  ESP.reset();
-  delay(5000);
-}*/
+    Serial.println("failed to connect and hit timeout");
+    delay(3000);
+    ESP.reset();
+    delay(5000);
+  }*/
 }
 
 void setupID() {
