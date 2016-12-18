@@ -16,6 +16,9 @@
 
 
 // defines
+#ifndef VERSION
+#define VERSION sonoffTH
+#endif
 #ifndef BUTTON
 #define BUTTON  0
 #endif
