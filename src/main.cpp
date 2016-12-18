@@ -63,6 +63,16 @@ WiFiClient wifiClient;
 // global variables
 bool shouldSaveConfig = false;
 char id[13];
+unsigned long int timerMeasureIntervallStart = 0l;
+unsigned long int timerLastReconnectStart = 0l;
+char mqtt_server[40];
+char mqtt_username[16];
+char mqtt_password[16];
+String subscribeSwitchTopic = "/switch/command";
+String publishSwitchTopic = "/switch/state";
+String publishVccTopic = "/vcc/value";
+String publishTemperatureTopic = "/temperature/value";
+String publishHumidityTopic = "/humidity/value";
 
 
 // callback functions
@@ -89,16 +99,6 @@ void shutPubSub();
 
 
 // to be checked
-char mqtt_server[40];
-char mqtt_username[16];
-char mqtt_password[16];
-String subscribeSwitchTopic = "/switch/command";
-String publishSwitchTopic = "/switch/state";
-String publishVccTopic = "/vcc/value";
-String publishTemperatureTopic = "/temperature/value";
-String publishHumidityTopic = "/humidity/value";
-unsigned long int timerMeasureIntervallStart = 0l;
-unsigned long int timerLastReconnectStart = 0l;
 bool currentState = HIGH;
 bool recentState = HIGH;
 
@@ -266,9 +266,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void setupHardware() {
-  ticker.attach(0.3, tick);
   Serial.begin(115200);
   Serial << endl << endl << "Version: " << VERSION << endl;
+  ticker.attach(0.3, tick);
   dht.begin();
   pinMode(BUTTON, INPUT);
   pinMode(RELAY, OUTPUT);
