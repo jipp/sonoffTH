@@ -1,6 +1,8 @@
 Import("env")
+
+from shutil import copyfile
 import os
-from stat import *
+
 
 def before_upload(source, target, env):
     print "before_upload"
@@ -13,9 +15,16 @@ def after_upload(source, target, env):
 
 
 def after_bin(source, target, env):
-    st = os.stat(source)
+    # copyfile(source, "hello")
+    # print source[0]
+    # print str(source)
+    # print str(env)
+    # print os.getcwd()+"/bin"
+    # print os.environ
+    # print env.Dump()
+    print env.get('PIOENV')
+    print env.get('CPPDEFINES')[9][1]
     print "after_bin"
-    print "file size: ", st[ST_SIZE]
     # do some actions
 
 
