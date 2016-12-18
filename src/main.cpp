@@ -28,7 +28,12 @@
 #ifndef JACK
 #define JACK    14
 #endif
+#ifndef DHTTYPE
 #define DHTTYPE DHT22
+#endif
+#ifndef LEDOFF
+#define LEDOFF  HIGH
+#endif
 
 
 // constants
@@ -399,7 +404,7 @@ void finishSetup() {
   } else {
     ticker.attach(0.5, tick);
   }
-  digitalWrite(LED, HIGH);
+  digitalWrite(LED, LEDOFF);
 }
 
 void setupTopic() {
