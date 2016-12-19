@@ -13,7 +13,9 @@
 #include <PubSubClient.h>
 #include <EEPROM.h>
 #include <DHT.h>
-
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 
 // defines
 #ifndef VERSION
@@ -106,6 +108,7 @@ void finishSetup();
 void setupTopic();
 void shutPubSub();
 void saveConfig();
+void setupOTA();
 
 
 // to be checked
@@ -199,6 +202,7 @@ void setup() {
         setupID();
         setupPubSub();
         setupTopic();
+        setupOTA();
         finishSetup();
         connect();
   #ifdef DEEPSLEEP
@@ -210,6 +214,7 @@ void setup() {
 }
 
 void loop() {
+        ArduinoOTA.handle();
         if (WiFi.status() == WL_CONNECTED) {
                 if (!pubSubClient.connected()) {
                         if (millis() - timerLastReconnectStart > timerLastReconnect * 1000) {
@@ -442,4 +447,25 @@ void saveConfig() {
         } else {
                 Serial << "failed to open config file for writing" << endl;
         }
+}
+
+void setupOTA() {
+        ArduinoOTA.onStart([]() {
+                Serial.println("Start");
+        });
+        ArduinoOTA.onEnd([]() {
+                Serial.println("\nEnd");
+        });
+        ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+                Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+        });
+        ArduinoOTA.onError([](ota_error_t error) {
+                Serial.printf("Error[%u]: ", error);
+                if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+                else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+                else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+                else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+                else if (error == OTA_END_ERROR) Serial.println("End Failed");
+        });
+        ArduinoOTA.begin();
 }
