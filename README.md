@@ -14,7 +14,6 @@ Firmware for the sonoffTH (based on ESP8266).
 ## The following features are in progress
 * react better when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
 * add last will for mqtt
-* parameter the OTA
 * CI for Project
 * maybe start on-demand wifi instead of resetting all settings
 * in case mqtt dies in operation, reconnect when switch changes
