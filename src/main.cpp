@@ -37,6 +37,15 @@
 #ifndef LEDOFF
 #define LEDOFF  HIGH
 #endif
+#ifndef SERVER
+#define SERVER  "lemonpi"
+#endif
+#ifndef PORT
+#define PORT    80
+#endif
+#ifndef PATH
+#define PATH    "/esp/update/arduino.php"
+#endif
 
 
 // constants
@@ -45,7 +54,6 @@ const char file[]="/config.json";
 const unsigned long int timerMeasureIntervall = 60l;
 const unsigned long int timerLastReconnect = 60l;
 const unsigned long int timerButtonPressed = 3l;
-const int mqtt_port = 1883;
 const unsigned long timerDeepSleep = 60l;
 
 
@@ -68,6 +76,7 @@ unsigned long int timerLastReconnectStart = 0l;
 char mqtt_server[40];
 char mqtt_username[16];
 char mqtt_password[16];
+char mqtt_port[6] =  "1883";
 String subscribeSwitchTopic = "/switch/command";
 String publishSwitchTopic = "/switch/state";
 String publishVccTopic = "/vcc/value";
@@ -96,6 +105,7 @@ void updater();
 void finishSetup();
 void setupTopic();
 void shutPubSub();
+void saveConfig();
 
 
 // to be checked
@@ -124,8 +134,9 @@ void readConfig() {
         #endif
         if (json.success()) {
           Serial << "parsed json" << endl;
-          if (json.containsKey("mqtt_server") && json.containsKey("mqtt_username") && json.containsKey("mqtt_password")) {
+          if (json.containsKey("mqtt_server") && json.containsKey("mqtt_port") && json.containsKey("mqtt_password") && json.containsKey("mqtt_username")) {
             strcpy(mqtt_server, json["mqtt_server"]);
+            strcpy(mqtt_port, json["mqtt_port"]);
             strcpy(mqtt_username, json["mqtt_username"]);
             strcpy(mqtt_password, json["mqtt_password"]);
           }
@@ -139,29 +150,13 @@ void readConfig() {
   }
 }
 
-void saveConfig() {
-  Serial << "saving config" << endl;
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
-  json["mqtt_server"] = mqtt_server;
-  json["mqtt_username"] = mqtt_username;
-  json["mqtt_password"] = mqtt_password;
-  File configFile = SPIFFS.open(file, "w");
-  if (!configFile) {
-    Serial << "failed to open config file for writing" << endl;
-  }
-  #ifdef VERBOSE
-  json.prettyPrintTo(Serial);
-  Serial << endl;
-  #endif
-  json.printTo(configFile);
-  configFile.close();
-}
+
 
 void setupWiFiManager() {
   ticker.attach(0.1, tick);
   readConfig();
   WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
+  WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6);
   WiFiManagerParameter custom_mqtt_username("username", "mqtt username", mqtt_username, 16);
   WiFiManagerParameter custom_mqtt_password("password", "mqtt password", mqtt_password, 16);
   WiFiManager wifiManager;
@@ -172,6 +167,7 @@ void setupWiFiManager() {
   #endif
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&custom_mqtt_server);
+  wifiManager.addParameter(&custom_mqtt_port);
   wifiManager.addParameter(&custom_mqtt_username);
   wifiManager.addParameter(&custom_mqtt_password);
   //wifiManager.resetSettings();
@@ -182,6 +178,7 @@ void setupWiFiManager() {
   } else {
     Serial << "WiFi connected" << endl;
     strcpy(mqtt_server, custom_mqtt_server.getValue());
+    strcpy(mqtt_port, custom_mqtt_port.getValue());
     strcpy(mqtt_username, custom_mqtt_username.getValue());
     strcpy(mqtt_password, custom_mqtt_password.getValue());
     if (shouldSaveConfig) {
@@ -207,7 +204,7 @@ void setup() {
   #ifdef DEEPSLEEP
   Serial << "going to sleep" << endl;
   shutPubSub();
-  delay(1000);
+  //delay(1000);
   ESP.deepSleep(timerDeepSleep * 1000000);
   #endif
 }
@@ -277,7 +274,7 @@ void setupHardware() {
 
 void setupPubSub() {
   pubSubClient.setClient(wifiClient);
-  pubSubClient.setServer(mqtt_server, mqtt_port);
+  pubSubClient.setServer(mqtt_server, String(mqtt_port).toInt());
   pubSubClient.setCallback(callback);
 }
 
@@ -386,7 +383,7 @@ bool connect() {
 
 void updater() {
   if (WiFi.status() == WL_CONNECTED) {
-    t_httpUpdate_return ret = ESPhttpUpdate.update("lemonpi", 80, "/esp/update/arduino.php", VERSION);
+    t_httpUpdate_return ret = ESPhttpUpdate.update(SERVER, PORT, PATH, VERSION);
     switch (ret) {
       case HTTP_UPDATE_FAILED:
       Serial << "HTTP_UPDATE_FAILD Error (" << ESPhttpUpdate.getLastError() << "): " << ESPhttpUpdate.getLastErrorString().c_str() << endl;
@@ -422,5 +419,27 @@ void shutPubSub() {
   if (pubSubClient.connected()) {
     pubSubClient.unsubscribe(subscribeSwitchTopic.c_str());
     pubSubClient.disconnect();
+  }
+}
+
+void saveConfig() {
+  Serial << "saving config" << endl;
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  File configFile = SPIFFS.open(file, "w");
+
+  if (configFile) {
+    json["mqtt_server"] = mqtt_server;
+    json["mqtt_port"] = mqtt_port;
+    json["mqtt_username"] = mqtt_username;
+    json["mqtt_password"] = mqtt_password;
+    #ifdef VERBOSE
+    json.prettyPrintTo(Serial);
+    Serial << endl;
+    #endif
+    json.printTo(configFile);
+    configFile.close();
+  } else {
+    Serial << "failed to open config file for writing" << endl;
   }
 }
