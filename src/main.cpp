@@ -110,6 +110,7 @@ void setupTopic();
 void shutPubSub();
 void saveConfig();
 void setupOTA();
+void goDeepSleep();
 
 
 void readConfig() {
@@ -200,9 +201,7 @@ void setup() {
         finishSetup();
         connect();
   #ifdef DEEPSLEEP
-        Serial << "going to sleep" << endl;
-        shutPubSub();
-        ESP.deepSleep(timerDeepSleep * 1000000);
+        goDeepSleep();
   #endif
         setupOTA();
 }
@@ -468,4 +467,11 @@ void setupOTA() {
                 else if (error == OTA_END_ERROR) Serial.println("End Failed");
         });
         ArduinoOTA.begin();
+}
+
+void goDeepSleep() {
+        Serial << "going to sleep" << endl;
+
+        shutPubSub();
+        ESP.deepSleep(timerDeepSleep * 1000000);
 }
