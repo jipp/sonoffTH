@@ -5,11 +5,13 @@ Firmware for the sonoffTH (based on ESP8266).
 
 ## The following features are implemented
 * start WiFiManager if wifi access is not possible
-* sending data to MQTT broker
-* LED blink shows progress
-* manual switch by pressing bottom
-* OTA update from webserver (requested by device)
-* reset settings when buttom pressed during startup
+* sending data to MQTT broker (username/password is required)
+* LED blinking shows progress and status
+* manual switch status by pressing bottom
+* OTA update from webserver during startup
+* reset settings when buttom pressed during startup for 3 sec
+* connect DHT22 sensor to jack for measurements
+* publish switch status, temperature, humidity and vcc
 
 ## The following features are in progress
 * react better when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
@@ -18,6 +20,8 @@ Firmware for the sonoffTH (based on ESP8266).
 * maybe start on-demand wifi instead of resetting all settings
 * in case mqtt dies in operation, reconnect when switch changes
 * enhance build system to automatic versioning and nameing of .bin file
+* make username/password for mqtt broker optional
+* add OTA triggered from IDE
 
 ## Additional files
 -
@@ -32,12 +36,22 @@ Firmware for the sonoffTH (based on ESP8266).
 * [1265 ] WiFiManager
 
 ## Info
-settings for the sonoffTH
-
+### settings for the sonoffTH
 * ESP8266: 1M (64k SPIFFS)
 
-## gpio settings used by default
-* gpio 0 -> button
-* gpio 12 -> relay and red LED
-* gpio 13 -> blue LED
-* gpio 14 -> jack in
+### gpio settings used by default
+* #define BUTTON  0  -> gpio 0
+* #define RELAY 12  -> gpio 12 (relay and red LED)
+* #define LED 13  -> gpio 13 (blue LED)
+* #define JACK  14  -> gpio 14
+
+### settings for OTA at startup
+* #define SERVER  "lemonpi"
+* #define PORT    80
+* #define PATH    "/esp/update/arduino.php"
+
+### DHT settings
+* #define DHTTYPE DHT22
+
+### LED off
+* #define LEDOFF  HIGH
