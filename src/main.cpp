@@ -383,6 +383,7 @@ bool connect() {
                 Serial << "failed, rc=" << pubSubClient.state() << endl;
                 ticker.attach(1.0, tick);
         }
+
         return pubSubClient.connected();
 }
 
