@@ -39,6 +39,12 @@ Firmware for the sonoffTH (based on ESP8266).
 ### settings for the sonoffTH
 * ESP8266: 1M (64k SPIFFS)
 
+### enable verbose output
+* #define VERBOSE
+
+## enable deep sleep
+* #define DEEPSLEEP
+
 ### gpio settings used by default
 * #define BUTTON  0  -> gpio 0
 * #define RELAY 12  -> gpio 12 (relay and red LED)
