@@ -18,8 +18,9 @@
 #include <ArduinoOTA.h>
 
 // defines
+// #define DEEPSLEEP
 #ifndef VERSION
-#define VERSION sonoffTH
+#define VERSION "sonoffTH"
 #endif
 #ifndef BUTTON
 #define BUTTON  0
@@ -75,10 +76,10 @@ bool shouldSaveConfig = false;
 char id[13];
 unsigned long int timerMeasureIntervallStart = 0l;
 unsigned long int timerLastReconnectStart = 0l;
-char mqtt_server[40];
-char mqtt_username[16];
-char mqtt_password[16];
-char mqtt_port[6] =  "1883";
+char mqtt_server[40] = "test.mosquitto.org";
+char mqtt_username[16] = "";
+char mqtt_password[16] = "";
+char mqtt_port[6] = "1883";
 String subscribeSwitchTopic = "/switch/command";
 String publishSwitchTopic = "/switch/state";
 String publishVccTopic = "/vcc/value";
@@ -111,12 +112,6 @@ void saveConfig();
 void setupOTA();
 
 
-// to be checked
-bool currentState = HIGH;
-bool recentState = HIGH;
-
-
-
 void readConfig() {
         Serial << "mounting FS..." << endl;
         if (SPIFFS.begin()) {
@@ -137,7 +132,7 @@ void readConfig() {
         #endif
                                 if (json.success()) {
                                         Serial << "parsed json" << endl;
-                                        if (json.containsKey("mqtt_server") && json.containsKey("mqtt_port") && json.containsKey("mqtt_password") && json.containsKey("mqtt_username")) {
+                                        if (json.containsKey("mqtt_server") && json.containsKey("mqtt_port") && json.containsKey("mqtt_username") && json.containsKey("mqtt_password")) {
                                                 strcpy(mqtt_server, json["mqtt_server"]);
                                                 strcpy(mqtt_port, json["mqtt_port"]);
                                                 strcpy(mqtt_username, json["mqtt_username"]);
@@ -202,15 +197,14 @@ void setup() {
         setupID();
         setupPubSub();
         setupTopic();
-        setupOTA();
         finishSetup();
         connect();
   #ifdef DEEPSLEEP
         Serial << "going to sleep" << endl;
         shutPubSub();
-        //delay(1000);
         ESP.deepSleep(timerDeepSleep * 1000000);
   #endif
+        setupOTA();
 }
 
 void loop() {
@@ -231,15 +225,13 @@ void loop() {
                         }
                 }
         }
-        currentState = digitalRead(BUTTON);
-        if ((currentState == LOW)and (recentState == HIGH)) {
+        if (digitalRead(BUTTON) == LOW) {
                 delay(250);
                 digitalWrite(RELAY, !digitalRead(RELAY));
                 writeSwitchStateEEPROM();
                 publishSwitchState();
                 Serial << "Switch state: " << digitalRead(RELAY) << endl;
         }
-        recentState = currentState;
 }
 
 
@@ -315,13 +307,13 @@ void checkForConfigReset() {
                         resetConfig();
                 }
         }
-        Serial << "finished waiting" << endl;
+        Serial << "finished waiting for reset" << endl;
 }
 
 void resetConfig() {
         WiFiManager wifiManager;
 
-        Serial << "reset" << endl;
+        Serial << "reset config" << endl;
         SPIFFS.format();
         wifiManager.resetSettings();
         delay(3000);
@@ -372,8 +364,15 @@ void publishValues() {
 }
 
 bool connect() {
+        bool connected = false;
+
         Serial << "Attempting MQTT connection (~5s) ..." << endl;
-        if (pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str())) {
+        if ((String(mqtt_username).length() == 0) || (String(mqtt_password).length() == 0)) {
+                connected = pubSubClient.connect(id);
+        } else {
+                connected = pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str());
+        }
+        if (connected) {
                 Serial << "connected, rc=" << pubSubClient.state() << endl;
                 publishSwitchState();
                 publishValues();
