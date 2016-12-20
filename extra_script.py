@@ -14,16 +14,18 @@ def after_upload(source, target, env):
     # do some actions
 
 
-def after_bin(source, target, env):
-    # copyfile(source, "hello")
-    # print source[0]
-    # print str(source)
-    # print str(env)
-    # print os.getcwd()+"/bin"
-    # print os.environ
-    # print env.Dump()
-    print env.get('PIOENV')
-    print env.get('CPPDEFINES')[9][1]
+def after_bin(target, source, env):
+    dir = "bin\\"
+    src = str(source[0])
+    dst = env.get('CPPDEFINES')[9][1].strip('\\"') + ".bin"
+
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    print "source: " + src
+    print "target: " + dst
+    copyfile(src, dir + dst)
+
     print "after_bin"
     # do some actions
 
