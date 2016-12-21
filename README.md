@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/jipp/sonoffTH.svg?branch=master)](https://travis-ci.org/jipp/sonoffTH)
-[![GitHub version](https://badge.fury.io/gh/jipp%2FsonoffTH.svg)](https://badge.fury.io/gh/jipp%2FsonoffTH)
+[![GitHub issues](https://img.shields.io/github/issues/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/issues)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
 
 # sonoffTH
 Firmware for the sonoffTH (based on ESP8266).
