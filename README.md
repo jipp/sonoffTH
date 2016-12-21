@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/jipp/sonoffTH.svg?branch=master)](https://travis-ci.org/jipp/sonoffTH)
+[![GitHub version](https://badge.fury.io/gh/jipp%2FsonoffTH.svg)](https://badge.fury.io/gh/jipp%2FsonoffTH)
 
 # sonoffTH
 Firmware for the sonoffTH (based on ESP8266).
@@ -9,19 +10,18 @@ Firmware for the sonoffTH (based on ESP8266).
 * LED blinking shows progress and status
 * manual switch status by pressing bottom
 * OTA update from webserver during startup
+* OTA update triggered from IDE
 * reset settings when buttom pressed during startup for 3 sec
 * connect DHT22 sensor to jack for measurements
 * publish switch status, temperature, humidity and vcc
+* username/password for mqtt broker optional
 
 ## The following features are in progress
 * react better when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
 * add last will for mqtt
 * CI for Project
-* maybe start on-demand wifi instead of resetting all settings
-* in case mqtt dies in operation, reconnect when switch changes
-* enhance build system to automatic versioning and nameing of .bin file
-* make username/password for mqtt broker optional
-* add OTA triggered from IDE
+* maybe start on-demand wifi-setup instead of resetting all settings
+* maybe in case mqtt dies in operation, reconnect when switch changes
 
 ## Additional files
 -
@@ -42,7 +42,7 @@ Firmware for the sonoffTH (based on ESP8266).
 ### enable verbose output
 * #define VERBOSE
 
-## enable deep sleep
+### enable deep sleep
 * #define DEEPSLEEP
 
 ### gpio settings used by default
@@ -51,7 +51,7 @@ Firmware for the sonoffTH (based on ESP8266).
 * #define LED 13  -> gpio 13 (blue LED)
 * #define JACK  14  -> gpio 14
 
-### settings for OTA at startup
+### settings for OTA at startup via webserver
 * #define SERVER  "lemonpi"
 * #define PORT    80
 * #define PATH    "/esp/update/arduino.php"
