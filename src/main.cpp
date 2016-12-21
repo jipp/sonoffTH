@@ -367,8 +367,10 @@ bool connect() {
 
         Serial << "Attempting MQTT connection (~5s) ..." << endl;
         if ((String(mqtt_username).length() == 0) || (String(mqtt_password).length() == 0)) {
+                Serial << "no authentication" << endl;
                 connected = pubSubClient.connect(id);
         } else {
+                Serial << "authentication" << endl;
                 connected = pubSubClient.connect(id, String(mqtt_username).c_str(), String(mqtt_password).c_str());
         }
         if (connected) {
@@ -387,6 +389,7 @@ bool connect() {
 
 void updater() {
         if (WiFi.status() == WL_CONNECTED) {
+                Serial << "try update" << endl;
                 t_httpUpdate_return ret = ESPhttpUpdate.update(SERVER, PORT, PATH, VERSION);
                 switch (ret) {
                 case HTTP_UPDATE_FAILED:
@@ -450,21 +453,21 @@ void saveConfig() {
 
 void setupOTA() {
         ArduinoOTA.onStart([]() {
-                Serial.println("Start");
+                Serial << "Start" << endl;
         });
         ArduinoOTA.onEnd([]() {
-                Serial.println("\nEnd");
+                Serial << "End" << endl;
         });
         ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-                Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+                Serial << "Progress: " << (progress / (total / 100)) << "%" << endl;
         });
         ArduinoOTA.onError([](ota_error_t error) {
-                Serial.printf("Error[%u]: ", error);
-                if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-                else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-                else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-                else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-                else if (error == OTA_END_ERROR) Serial.println("End Failed");
+                Serial << "Error[" << error << "]: ";
+                if (error == OTA_AUTH_ERROR) Serial << "Auth Failed" << endl;
+                else if (error == OTA_BEGIN_ERROR) Serial << "Begin Failed" << endl;
+                else if (error == OTA_CONNECT_ERROR) Serial << "Connect Failed" << endl;
+                else if (error == OTA_RECEIVE_ERROR) Serial << "Receive Failed" << endl;
+                else if (error == OTA_END_ERROR) Serial << "End Failed" << endl;
         });
         ArduinoOTA.begin();
 }
