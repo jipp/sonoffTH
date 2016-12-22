@@ -36,29 +36,54 @@ Firmware for the sonoffTH (based on ESP8266).
 * [ 560 ] Streaming
 * [1265 ] WiFiManager
 
-## Info
-### settings for the sonoffTH
-* ESP8266: 1M (64k SPIFFS)
+## Board Settings
+### sonoffTH - ESP8266: 1M (64k SPIFFS)
+* gpio 0  -> button
+* gpio 12 -> relay
+* gpio 13 -> blue LED
+* gpio 14 -> jack
 
-### enable verbose output
+### Witty Cloud Modul - ESP8266 12F
+* ADC     -> LDR
+* gpio 2  -> buildin blue LED
+* gpio 4  -> button
+* gpio 12 -> green LED
+* gpio 13 -> blue LED
+* gpio 15 -> red LED
+
+### HUZZAH ESP8266 breakout
+add an additional pull-up-resistor for the gpio button, otherwise the button will not work as expected.
+
+## Info
+### enable verbose output (default not defined)
 * #define VERBOSE
 
-### enable deep sleep
+### enable deep sleep (default not defined)
 * #define DEEPSLEEP
 
-### gpio settings used by default
-* #define BUTTON  0  -> gpio 0
-* #define RELAY 12  -> gpio 12 (relay and red LED)
-* #define LED 13  -> gpio 13 (blue LED)
-* #define JACK  14  -> gpio 14
+### default gpio settings
+* ADC -> free
+* #define BUTTON  0   -> gpio 0
+* #define RELAY   12  -> gpio 12 (relay and red LED)
+* #define LED     13  -> gpio 13 (blue LED)
+* #define JACK    14  -> gpio 14
 
-### settings for OTA at startup via webserver
+### default settings for OTA at startup via webserver
 * #define SERVER  "lemonpi"
 * #define PORT    80
 * #define PATH    "/esp/update/arduino.php"
 
-### DHT settings
+### default DHT settings (allowed values: DHT11, DHT21, DHT22)
 * #define DHTTYPE DHT22
 
-### LED off
+### level when LED is off
 * #define LEDOFF  HIGH
+
+## tested environments
+### boards
+* sonoffTH
+* huzzah
+* witty cloud
+
+## sensors
+* DHT22
