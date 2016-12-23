@@ -34,8 +34,8 @@
 #ifndef JACK
 #define JACK    14
 #endif
-#ifndef DHTTYPE
-#define DHTTYPE DHT22
+#ifndef SENSOR
+#define SENSOR DHT22
 #endif
 #ifndef LEDOFF
 #define LEDOFF  HIGH
@@ -67,7 +67,7 @@ ADC_MODE(ADC_VCC);
 // global definitions
 Ticker ticker;
 PubSubClient pubSubClient;
-DHT dht(JACK, DHTTYPE);
+DHT dht(JACK, SENSOR);
 WiFiClient wifiClient;
 
 
