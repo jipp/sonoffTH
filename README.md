@@ -3,7 +3,11 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
 
 # sonoffTH
-Firmware for the sonoffTH (based on ESP8266).
+Firmware for the sonoffTH (based on ESP8266), to be used as well with other boards.
+
+## IDE
+* PlatformIO
+* copy content of main.cpp into Arduino IDE should also work
 
 ## The following features are implemented
 * start WiFiManager if wifi access is not possible
@@ -13,25 +17,24 @@ Firmware for the sonoffTH (based on ESP8266).
 * OTA update from webserver during startup
 * OTA update triggered from IDE
 * reset settings when buttom pressed during startup for 3 sec
-* connect DHT22 sensor to jack for measurements
+* connect sensor to jack for measurements
 * publish switch status, temperature, humidity and vcc
 * username/password for mqtt broker optional
 
 ## The following features are in progress
-* react better when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
+* react faster when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
 * add last will for mqtt
 * CI for Project
 * maybe start on-demand wifi-setup instead of resetting all settings
 * maybe in case mqtt dies in operation, reconnect when switch changes
+* add more sensors
 
 ## Additional files
--
 
 ## Needed Libraries
-* [ 18  ] Adafruit DHT Unified
+* [ 19  ] DHT sensor library
 * [ 31  ] Adafruit Unified Sensor
 * [ 64  ] ArduinoJson
-* [ 19  ] DHT sensor library
 * [ 89  ] PubSubClient
 * [ 560 ] Streaming
 * [1265 ] WiFiManager
@@ -54,6 +57,10 @@ Firmware for the sonoffTH (based on ESP8266).
 ### HUZZAH ESP8266 breakout
 add an additional pull-up-resistor for the gpio button, otherwise the button will not work as expected.
 
+### esp12e
+check out the wiring here:
+http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
+
 ## Info
 ### enable verbose output (default not defined)
 * #define VERBOSE
@@ -73,17 +80,17 @@ add an additional pull-up-resistor for the gpio button, otherwise the button wil
 * #define PORT    80
 * #define PATH    "/esp/update/arduino.php"
 
-### default DHT settings (allowed values: DHT11, DHT21, DHT22)
-* #define DHTTYPE DHT22
+### default sensor settings (allowed values: DHT11, DHT21, DHT22)
+* #define SENSOR DHT22
 
 ### level when LED is off
 * #define LEDOFF  HIGH
 
-## tested environments
+## tested hardware
 ### boards
 * sonoffTH
-* huzzah
-* witty cloud
+* HUZZAH ESP8266 breakout
+* Witty Cloud Modul
 
-## sensors
+### sensors
 * DHT22
