@@ -95,6 +95,7 @@ void callback(char*, byte*, unsigned int);
 
 // functions
 void setupHardware();
+void printSettings();
 void readSwitchStateEEPROM();
 void writeSwitchStateEEPROM();
 void setupPubSub();
@@ -191,6 +192,7 @@ void setupWiFiManager() {
 
 void setup() {
         setupHardware();
+        printSettings();
         readSwitchStateEEPROM();
         checkForConfigReset();
         setupWiFiManager();
@@ -263,11 +265,28 @@ void setupHardware() {
         Serial << endl << endl << "Version: " << VERSION << endl;
         ticker.attach(0.3, tick);
         dht.begin();
-        pinMode(BUTTON, INPUT);
+        pinMode(BUTTON, INPUT_PULLUP);
         pinMode(RELAY, OUTPUT);
         pinMode(LED, OUTPUT);
 }
 
+void printSettings() {
+  #ifdef VERBOSE
+   #ifdef DEEPSLEEP
+        Serial << "DEEPSLEEP" << endl;
+   #endif
+        Serial << "BUTTON: " << BUTTON << endl;
+        Serial << "RELAY: " << RELAY << endl;
+        Serial << "LED: " << LED << endl;
+        Serial << "JACK: " << JACK << endl;
+        Serial << "SENSOR: " << SENSOR << endl;
+        Serial << "LEDOFF: " << LEDOFF << endl;
+        Serial << "SERVER: " << SERVER << endl;
+        Serial << "PORT: " << PORT << endl;
+        Serial << "PATH: " << PATH << endl;
+        Serial << endl;
+  #endif
+}
 void setupPubSub() {
         pubSubClient.setClient(wifiClient);
         pubSubClient.setServer(mqtt_server, String(mqtt_port).toInt());
@@ -379,6 +398,7 @@ bool connect() {
                 publishValues();
                 pubSubClient.subscribe(subscribeSwitchTopic.c_str());
                 ticker.detach();
+                digitalWrite(LED, LEDOFF);
         } else {
                 Serial << "failed, rc=" << pubSubClient.state() << endl;
                 ticker.attach(1.0, tick);
@@ -408,10 +428,10 @@ void updater() {
 void finishSetup() {
         if (WiFi.status() == WL_CONNECTED) {
                 ticker.detach();
+                digitalWrite(LED, LEDOFF);
         } else {
                 ticker.attach(0.5, tick);
         }
-        digitalWrite(LED, LEDOFF);
 }
 
 void setupTopic() {
