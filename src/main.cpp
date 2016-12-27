@@ -262,7 +262,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void setupHardware() {
         Serial.begin(115200);
-        Serial << endl << endl << "Version: " << VERSION << endl;
         ticker.attach(0.3, tick);
         dht.begin();
         pinMode(BUTTON, INPUT_PULLUP);
@@ -271,6 +270,7 @@ void setupHardware() {
 }
 
 void printSettings() {
+  Serial << endl << "VERSION: " << VERSION << endl;
   #ifdef VERBOSE
    #ifdef DEEPSLEEP
         Serial << "DEEPSLEEP" << endl;
