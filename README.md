@@ -5,6 +5,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/stargazers)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
 
+[![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/jipp/sonoffTH)
+[![GitHub tag](https://img.shields.io/github/tag/strongloop/express.svg)](https://github.com/jipp/sonoffTH)
+
 # sonoffTH
 Firmware for the sonoffTH (based on ESP8266), to be used as well with other boards.
 
