@@ -1,7 +1,13 @@
 [![Build Status](https://travis-ci.org/jipp/sonoffTH.svg?branch=master)](https://travis-ci.org/jipp/sonoffTH)
-[![GitHub version](https://badge.fury.io/gh/jipp%2FsonoffTH.svg)](https://badge.fury.io/gh/jipp%2FsonoffTH)
+
 [![GitHub issues](https://img.shields.io/github/issues/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/issues)
+[![GitHub forks](https://img.shields.io/github/forks/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/network)
+[![GitHub stars](https://img.shields.io/github/stars/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/stargazers)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
+
+[![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/jipp/sonoffTH)
+[![GitHub tag](https://img.shields.io/github/tag/strongloop/express.svg)](https://github.com/jipp/sonoffTH)
+[![GitHub commits](https://img.shields.io/github/commits-since/SubtitleEdit/subtitleedit/3.4.7.svg)](https://github.com/jipp/sonoffTH/)
 
 # sonoffTH
 Firmware for the sonoffTH (based on ESP8266), to be used as well with other boards.
