@@ -5,9 +5,6 @@
 [![GitHub stars](https://img.shields.io/github/stars/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/stargazers)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
 
-[![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/jipp/sonoffTH)
-[![GitHub tag](https://img.shields.io/github/tag/strongloop/express.svg)](https://github.com/jipp/sonoffTH)
-
 # sonoffTH
 Firmware for the sonoffTH (based on ESP8266), to be used as well with other boards.
 
@@ -33,13 +30,14 @@ Firmware for the sonoffTH (based on ESP8266), to be used as well with other boar
 * CI for Project
 * maybe start on-demand wifi-setup instead of resetting all settings
 * maybe in case mqtt dies in operation, reconnect when switch changes
-* add more sensors
 
 ## Additional files
 
 ## Needed Libraries
+* [  1  ] OneWire
 * [ 19  ] DHT sensor library
 * [ 31  ] Adafruit Unified Sensor
+* [ 54  ] DallasTemperature
 * [ 64  ] ArduinoJson
 * [ 89  ] PubSubClient
 * [ 560 ] Streaming
@@ -71,7 +69,7 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 * #define VERBOSE
 
 ### enable deep sleep (default not defined)
-* #define DEEPSLEEP
+* #define DEEPSLEEP 900
 
 ### default gpio settings
 * ADC -> free
@@ -85,9 +83,6 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 * #define PORT    80
 * #define PATH    "/esp/update/arduino.php"
 
-### default sensor settings (allowed values: DHT11, DHT21, DHT22)
-* #define SENSOR DHT22
-
 ### level when LED is off
 * #define LEDOFF  HIGH
 
@@ -98,4 +93,5 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 * Witty Cloud Modul
 
 ### sensors
+* DHT11
 * DHT22
