@@ -1,24 +1,18 @@
 #include <Arduino.h>
 
-// libaries
-#include <Streaming.h>
-#include <Ticker.h>
-#include <FS.h>
-#include <ESP8266WiFi.h>
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiManager.h>
-#include <ArduinoJson.h>
-#include <ESP8266httpUpdate.h>
-#include <PubSubClient.h>
-#include <EEPROM.h>
-#include <DHT.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-
 // defines
-// #define DEEPSLEEP
+// #define DEEPSLEEP  900
+#define DS1822  0x22
+#define DS18B20 0x28
+#define DS18S20 0x10
+
+#if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
+#include <DHT.h>
+#elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#endif
+
 #ifndef VERSION
 #define VERSION "sonoffTH"
 #endif
@@ -34,9 +28,6 @@
 #ifndef JACK
 #define JACK    14
 #endif
-#ifndef SENSOR
-#define SENSOR DHT22
-#endif
 #ifndef LEDOFF
 #define LEDOFF  HIGH
 #endif
@@ -51,13 +42,29 @@
 #endif
 
 
+// libaries
+#include <Streaming.h>
+#include <Ticker.h>
+#include <FS.h>
+#include <ESP8266WiFi.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>
+#include <ArduinoJson.h>
+#include <ESP8266httpUpdate.h>
+#include <PubSubClient.h>
+#include <EEPROM.h>
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+
+
 // constants
 const int address = 0;
 const char file[]="/config.json";
 const unsigned long int timerMeasureIntervall = 60l;
 const unsigned long int timerLastReconnect = 60l;
 const unsigned long int timerButtonPressed = 3l;
-const unsigned long timerDeepSleep = 60l;
 
 
 // switch adc port to monitor vcc
@@ -67,7 +74,12 @@ ADC_MODE(ADC_VCC);
 // global definitions
 Ticker ticker;
 PubSubClient pubSubClient;
+#if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
 DHT dht(JACK, SENSOR);
+#elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+OneWire oneWire(JACK);
+DallasTemperature dallasTemperature(&oneWire);
+#endif
 WiFiClient wifiClient;
 
 
@@ -263,23 +275,29 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setupHardware() {
         Serial.begin(115200);
         ticker.attach(0.3, tick);
+  #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
         dht.begin();
+  #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+        dallasTemperature.begin();
+  #endif
         pinMode(BUTTON, INPUT_PULLUP);
         pinMode(RELAY, OUTPUT);
         pinMode(LED, OUTPUT);
 }
 
 void printSettings() {
-  Serial << endl << "VERSION: " << VERSION << endl;
+        Serial << endl << "VERSION: " << VERSION << endl;
   #ifdef VERBOSE
-   #ifdef DEEPSLEEP
-        Serial << "DEEPSLEEP" << endl;
-   #endif
+  #ifdef DEEPSLEEP
+        Serial << "DEEPSLEEP: " << DEEPSLEEP << "s" << endl;
+  #endif
         Serial << "BUTTON: " << BUTTON << endl;
         Serial << "RELAY: " << RELAY << endl;
         Serial << "LED: " << LED << endl;
         Serial << "JACK: " << JACK << endl;
+  #ifdef SENSOR
         Serial << "SENSOR: " << SENSOR << endl;
+  #endif
         Serial << "LEDOFF: " << LEDOFF << endl;
         Serial << "SERVER: " << SERVER << endl;
         Serial << "PORT: " << PORT << endl;
@@ -287,6 +305,7 @@ void printSettings() {
         Serial << endl;
   #endif
 }
+
 void setupPubSub() {
         pubSubClient.setClient(wifiClient);
         pubSubClient.setServer(mqtt_server, String(mqtt_port).toInt());
@@ -356,8 +375,12 @@ void setupID() {
 
 void publishValues() {
         unsigned int vcc = ESP.getVcc();
+  #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
         float temperature = dht.readTemperature();
         float humidity = dht.readHumidity();
+  #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+        float temperature;
+  #endif
 
         if (pubSubClient.connected()) {
                 if (pubSubClient.publish(publishVccTopic.c_str(),
@@ -366,6 +389,7 @@ void publishValues() {
                 } else {
                         Serial << "!< " << publishVccTopic << ": " << vcc << endl;
                 }
+    #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
                 if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
                                                                 String(temperature).c_str())) {
                         Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
@@ -378,6 +402,16 @@ void publishValues() {
                 } else {
                         Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
                 }
+    #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+                dallasTemperature.requestTemperatures();
+                temperature = dallasTemperature.getTempCByIndex(0);
+                if (pubSubClient.publish(publishTemperatureTopic.c_str(),
+                                         String(temperature).c_str())) {
+                        Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
+                } else {
+                        Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
+                }
+    #endif
         }
 }
 
@@ -394,7 +428,9 @@ bool connect() {
         }
         if (connected) {
                 Serial << "connected, rc=" << pubSubClient.state() << endl;
+    #ifndef DEEPSLEEP
                 publishSwitchState();
+    #endif
                 publishValues();
                 pubSubClient.subscribe(subscribeSwitchTopic.c_str());
                 ticker.detach();
@@ -492,9 +528,11 @@ void setupOTA() {
         ArduinoOTA.begin();
 }
 
+#ifdef DEEPSLEEP
 void goDeepSleep() {
         Serial << "going to sleep" << endl;
 
         shutPubSub();
-        ESP.deepSleep(timerDeepSleep * 1000000);
+        ESP.deepSleep(DEEPSLEEP * 1000000);
 }
+#endif
