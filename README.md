@@ -6,7 +6,7 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
 
 # sonoffTH
-Firmware for the sonoffTH (based on ESP8266), to be used as well with other boards.
+Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used as well with other boards.
 
 ## IDE
 * PlatformIO
