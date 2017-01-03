@@ -124,82 +124,8 @@ void shutPubSub();
 void saveConfig();
 void setupOTA();
 void goDeepSleep();
-
-
-void readConfig() {
-        Serial << "mounting FS..." << endl;
-        if (SPIFFS.begin()) {
-                Serial << "mounted file system" << endl;
-                if (SPIFFS.exists(file)) {
-                        Serial << "reading config file" << endl;
-                        File configFile = SPIFFS.open(file, "r");
-                        if (configFile) {
-                                Serial << "opened config file" << endl;;
-                                size_t size = configFile.size();
-                                std::unique_ptr<char[]> buf(new char[size]);
-                                configFile.readBytes(buf.get(), size);
-                                DynamicJsonBuffer jsonBuffer;
-                                JsonObject& json = jsonBuffer.parseObject(buf.get());
-        #ifdef VERBOSE
-                                json.prettyPrintTo(Serial);
-                                Serial << endl;
-        #endif
-                                if (json.success()) {
-                                        Serial << "parsed json" << endl;
-                                        if (json.containsKey("mqtt_server") && json.containsKey("mqtt_port") && json.containsKey("mqtt_username") && json.containsKey("mqtt_password")) {
-                                                strcpy(mqtt_server, json["mqtt_server"]);
-                                                strcpy(mqtt_port, json["mqtt_port"]);
-                                                strcpy(mqtt_username, json["mqtt_username"]);
-                                                strcpy(mqtt_password, json["mqtt_password"]);
-                                        }
-                                } else {
-                                        Serial << "failed to load json config" << endl;
-                                }
-                        }
-                }
-        } else {
-                Serial << "failed to mount FS" << endl;
-        }
-}
-
-
-
-void setupWiFiManager() {
-        ticker.attach(0.1, tick);
-        readConfig();
-        WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
-        WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6);
-        WiFiManagerParameter custom_mqtt_username("username", "mqtt username", mqtt_username, 16);
-        WiFiManagerParameter custom_mqtt_password("password", "mqtt password", mqtt_password, 16);
-        WiFiManager wifiManager;
-  #ifdef VERBOSE
-        wifiManager.setDebugOutput(true);
-  #else
-        wifiManager.setDebugOutput(false);
-  #endif
-        wifiManager.setSaveConfigCallback(saveConfigCallback);
-        wifiManager.addParameter(&custom_mqtt_server);
-        wifiManager.addParameter(&custom_mqtt_port);
-        wifiManager.addParameter(&custom_mqtt_username);
-        wifiManager.addParameter(&custom_mqtt_password);
-        //wifiManager.resetSettings();
-        //SPIFFS.format();
-        wifiManager.setTimeout(180);
-        if (!wifiManager.autoConnect("AutoConnectAP")) {
-                Serial << "failed to connect and hit timeout" << endl;
-        } else {
-                Serial << "WiFi connected" << endl;
-                strcpy(mqtt_server, custom_mqtt_server.getValue());
-                strcpy(mqtt_port, custom_mqtt_port.getValue());
-                strcpy(mqtt_username, custom_mqtt_username.getValue());
-                strcpy(mqtt_password, custom_mqtt_password.getValue());
-                if (shouldSaveConfig) {
-                        saveConfig();
-                }
-                Serial << "local ip: " << WiFi.localIP() << endl;
-        }
-}
-
+void setupWiFiManager();
+void readConfig();
 
 
 void setup() {
@@ -526,6 +452,78 @@ void setupOTA() {
                 else if (error == OTA_END_ERROR) Serial << "End Failed" << endl;
         });
         ArduinoOTA.begin();
+}
+
+void setupWiFiManager() {
+        ticker.attach(0.1, tick);
+        readConfig();
+        WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
+        WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6);
+        WiFiManagerParameter custom_mqtt_username("username", "mqtt username", mqtt_username, 16);
+        WiFiManagerParameter custom_mqtt_password("password", "mqtt password", mqtt_password, 16);
+        WiFiManager wifiManager;
+  #ifdef VERBOSE
+        wifiManager.setDebugOutput(true);
+  #else
+        wifiManager.setDebugOutput(false);
+  #endif
+        wifiManager.setSaveConfigCallback(saveConfigCallback);
+        wifiManager.addParameter(&custom_mqtt_server);
+        wifiManager.addParameter(&custom_mqtt_port);
+        wifiManager.addParameter(&custom_mqtt_username);
+        wifiManager.addParameter(&custom_mqtt_password);
+        //wifiManager.resetSettings();
+        //SPIFFS.format();
+        wifiManager.setTimeout(180);
+        if (!wifiManager.autoConnect("AutoConnectAP")) {
+                Serial << "failed to connect and hit timeout" << endl;
+        } else {
+                Serial << "WiFi connected" << endl;
+                strcpy(mqtt_server, custom_mqtt_server.getValue());
+                strcpy(mqtt_port, custom_mqtt_port.getValue());
+                strcpy(mqtt_username, custom_mqtt_username.getValue());
+                strcpy(mqtt_password, custom_mqtt_password.getValue());
+                if (shouldSaveConfig) {
+                        saveConfig();
+                }
+                Serial << "local ip: " << WiFi.localIP() << endl;
+        }
+}
+
+void readConfig() {
+        Serial << "mounting FS..." << endl;
+        if (SPIFFS.begin()) {
+                Serial << "mounted file system" << endl;
+                if (SPIFFS.exists(file)) {
+                        Serial << "reading config file" << endl;
+                        File configFile = SPIFFS.open(file, "r");
+                        if (configFile) {
+                                Serial << "opened config file" << endl;;
+                                size_t size = configFile.size();
+                                std::unique_ptr<char[]> buf(new char[size]);
+                                configFile.readBytes(buf.get(), size);
+                                DynamicJsonBuffer jsonBuffer;
+                                JsonObject& json = jsonBuffer.parseObject(buf.get());
+        #ifdef VERBOSE
+                                json.prettyPrintTo(Serial);
+                                Serial << endl;
+        #endif
+                                if (json.success()) {
+                                        Serial << "parsed json" << endl;
+                                        if (json.containsKey("mqtt_server") && json.containsKey("mqtt_port") && json.containsKey("mqtt_username") && json.containsKey("mqtt_password")) {
+                                                strcpy(mqtt_server, json["mqtt_server"]);
+                                                strcpy(mqtt_port, json["mqtt_port"]);
+                                                strcpy(mqtt_username, json["mqtt_username"]);
+                                                strcpy(mqtt_password, json["mqtt_password"]);
+                                        }
+                                } else {
+                                        Serial << "failed to load json config" << endl;
+                                }
+                        }
+                }
+        } else {
+                Serial << "failed to mount FS" << endl;
+        }
 }
 
 #ifdef DEEPSLEEP
