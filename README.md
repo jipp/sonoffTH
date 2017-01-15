@@ -41,6 +41,7 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 * [ 64  ] ArduinoJson
 * [ 89  ] PubSubClient
 * [ 560 ] Streaming
+* [ 962 ] mbed-drivers
 * [1265 ] WiFiManager
 
 ## Board Settings
