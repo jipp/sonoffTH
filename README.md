@@ -23,6 +23,7 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 * connect sensor to jack for measurements
 * publish switch status, temperature, humidity and vcc
 * username/password for mqtt broker optional
+* reset settings during operation by pressing button for 3 sec
 
 ## The following features are in progress
 * react faster when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)

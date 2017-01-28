@@ -62,9 +62,9 @@
 // constants
 const int address = 0;
 const char file[]="/config.json";
-const unsigned long int timerMeasureIntervall = 60l;
-const unsigned long int timerLastReconnect = 60l;
-const unsigned long int timerButtonPressed = 3l;
+const unsigned long timerMeasureIntervall = 60;
+const unsigned long timerLastReconnect = 60;
+const unsigned long timerButtonPressedReset = 3;
 
 
 // switch adc port to monitor vcc
@@ -86,8 +86,10 @@ WiFiClient wifiClient;
 // global variables
 bool shouldSaveConfig = false;
 char id[13];
-unsigned long int timerMeasureIntervallStart = 0l;
-unsigned long int timerLastReconnectStart = 0l;
+unsigned long timerMeasureIntervallStart = 0;
+unsigned long timerLastReconnectStart = 0;
+unsigned long timerButtonPressedStart = 0;
+bool calculate = false;
 char mqtt_server[40] = "test.mosquitto.org";
 char mqtt_username[16] = "";
 char mqtt_password[16] = "";
@@ -164,12 +166,20 @@ void loop() {
                         }
                 }
         }
-        if (digitalRead(BUTTON) == LOW) {
-                delay(250);
+        if (!calculate and (digitalRead(BUTTON) == LOW)) {
+                timerButtonPressedStart = millis();
+                calculate = true;
+        }
+        if (calculate and (digitalRead(BUTTON) == HIGH)) {
+              if (millis() - timerButtonPressedStart > timerButtonPressedReset * 1000) {
+                resetConfig();
+              } else if (millis() - timerButtonPressedStart > 0) {
+                calculate = false;
                 digitalWrite(RELAY, !digitalRead(RELAY));
                 writeSwitchStateEEPROM();
                 publishSwitchState();
                 Serial << "Switch state: " << digitalRead(RELAY) << endl;
+              }
         }
 }
 
@@ -261,16 +271,15 @@ void publishSwitchState() {
 }
 
 void checkForConfigReset() {
-        unsigned long int timerButtonPressedStart =  millis();
-
-        Serial << "waiting for reset" << endl;
+        Serial << "waiting 1 sec for reset - hold button for " << timerButtonPressedReset << " sec to reset" << endl;
         delay(1000);
+        timerButtonPressedStart =  millis();
         while (digitalRead(BUTTON) == LOW) {
-                if (millis() - timerButtonPressedStart > timerButtonPressed * 1000) {
+                if (millis() - timerButtonPressedStart > timerButtonPressedReset * 1000) {
                         resetConfig();
                 }
         }
-        Serial << "finished waiting for reset" << endl;
+        Serial << "no reset triggered" << endl;
 }
 
 void resetConfig() {
