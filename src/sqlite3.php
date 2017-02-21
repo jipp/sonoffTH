@@ -16,6 +16,8 @@ class DB {
   function create() {
     $create = "CREATE TABLE IF NOT EXISTS esp (mac TEXT PRIMARY KEY, version TEXT, comment TEXT)";
     $this->sqlite3->exec($create);
+	$create = "CREATE TABLE IF NOT EXISTS log (time TEXT PRIMARY KEY, mac TEXT, comment TEXT)";
+	$this->sqlite3->exec($create);
   }
 
   function checkMac($mac) {
@@ -28,13 +30,28 @@ class DB {
     return $version;
   }
 
-  function selectAll() {
-    $results = $this->sqlite3->query('SELECT * FROM esp');
-    echo "<table border=1> <tr> <th>mac</th> <th>version</th> <th>comment</th> </tr>";
-    while ($row = $results->fetchArray()) {
-      echo "<tr> <td>".$row["mac"]."</td><td>".$row["version"]."</td><td>".$row["comment"]."</td></tr>";
+  function selectAll($table) {
+    echo "<table border=1>\n";
+    echo "<tr> ";
+    $pragma = $this->sqlite3->query("PRAGMA table_info('$table')");
+    while($name = $pragma->fetchArray(SQLITE3_ASSOC)) {
+       echo "<th>". $name['name']."</th> ";
     }
-    echo "</table>";
+    echo "</tr>\n";
+    $results = $this->sqlite3->query("SELECT * FROM '$table'");
+    while($row = $results->fetchArray(SQLITE3_ASSOC)) {
+      echo "<tr> ";
+      foreach($row as $value) {
+        echo "<td>".$value."</td> ";
+      }
+      echo "</tr>\n";
+    }
+    echo "</table>\n";
+  }
+
+  function insertLog($mac, $comment) {
+    $insert = "INSERT INTO log VALUES (datetime('now', 'localtime'), '$mac', '$comment')";
+    $this->sqlite3->exec($insert);
   }
 
   function insertVersion($mac, $version, $comment) {
