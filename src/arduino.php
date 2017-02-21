@@ -13,7 +13,7 @@ function test() {
     "HTTP_X_ESP8266_SKETCH_SIZE" => "373940",
     "HTTP_X_ESP8266_CHIP_SIZE" => "524288",
     "HTTP_X_ESP8266_SDK_VERSION" => "DOOR-7-g14f53a19",
-    "HTTP_X_ESP8266_VERSION" => "1.3.0",
+    "HTTP_X_ESP8266_VERSION" => "esp8266-v1.3.1",
     "SERVER_PROTOCOL" => "HTTP/1.0"
   );
 }
@@ -59,20 +59,23 @@ if (!check_header('HTTP_X_ESP8266_STA_MAC') ||
   exit();
 }
 
-if ($sql->checkMac($_SERVER['HTTP_X_ESP8266_STA_MAC'])==1) {
+if ($sql->checkMac($_SERVER['HTTP_X_ESP8266_STA_MAC'])==0) {
+  header($_SERVER["SERVER_PROTOCOL"].' 500 not in table', true, 500);
+  $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], $_SERVER['HTTP_X_ESP8266_STA_MAC']." not in table");
+  $sql->insertVersion($_SERVER['HTTP_X_ESP8266_STA_MAC'], $_SERVER['HTTP_X_ESP8266_VERSION'], "automatically added");
+} else {
   if ($sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC']) != $_SERVER['HTTP_X_ESP8266_VERSION']) {
     if (file_exists("./bin/".$sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC']).".bin")) {
+      $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], $_SERVER['HTTP_X_ESP8266_VERSION']." -> ".$sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC'])." version modified");
       sendFile("./bin/".$sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC']).".bin");
-      file_put_contents('update.log', date('d.m.Y H:i:s', time())."\t".$_SERVER['HTTP_X_ESP8266_STA_MAC']."\t".$sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC'])."\n", FILE_APPEND | LOCK_EX );
     } else {
-      header($_SERVER["SERVER_PROTOCOL"].' 500 no file for ESP MAC', true, 500);
+      header($_SERVER["SERVER_PROTOCOL"].' 500 no file available', true, 500);
+      $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], $sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC']).".bin no file available");
     }
   } else {
-    header($_SERVER["SERVER_PROTOCOL"].' 304 Not Modified', true, 304);
+    header($_SERVER["SERVER_PROTOCOL"].' 304 version not modified', true, 304);
+    $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], "version not modified");
   }
-} else {
-  if ($sql->checkMac($_SERVER['HTTP_X_ESP8266_STA_MAC'])==0) {
-    $sql->insertVersion($_SERVER['HTTP_X_ESP8266_STA_MAC'], $_SERVER['HTTP_X_ESP8266_VERSION'], "automatic added");
-  }
-  header($_SERVER["SERVER_PROTOCOL"].' 500 no version for ESP MAC', true, 500);
 }
+
+?>
