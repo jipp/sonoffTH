@@ -74,7 +74,7 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 * #define DEEPSLEEP 900
 
 ### default gpio settings
-* ADC -> free
+* ADC -> voltage measurement
 * #define BUTTON  0   -> gpio 0
 * #define RELAY   12  -> gpio 12 (relay and red LED)
 * #define LED     13  -> gpio 13 (blue LED)
@@ -93,7 +93,10 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 * sonoffTH
 * HUZZAH ESP8266 breakout
 * Witty Cloud Modul
+* WeMos D1 Mini Pro
 
 ### sensors
 * DHT11
+* DHT21
 * DHT22
+* ds18b22
