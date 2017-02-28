@@ -1,0 +1,18 @@
+#!/usr/bin/expect
+
+spawn sftp pi@lemonpi
+
+expect "password: "
+send "!19WoKe67?\n"
+
+expect "sftp> "
+send "lcd /Users/wolfgang.keller/Documents/PlatformIO/sonoffTH/bin\n"
+
+expect "sftp> "
+send "cd /var/www/html/esp/update/bin\n"
+
+expect "sftp> "
+send "put *\n"
+
+expect "sftp> "
+send "bye\n"
