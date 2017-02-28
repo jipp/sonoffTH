@@ -41,3 +41,4 @@ script:
     - platformio run -e huzzah
     - platformio run -e witty
     - platformio run -e sonoffTH
+    - platformio run -e d1_mini
