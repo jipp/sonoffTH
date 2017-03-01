@@ -9,8 +9,8 @@
 Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used as well with other boards.
 
 ## IDE
-* PlatformIO
-* copy content of main.cpp into Arduino IDE should also work
+* PlatformIO IDE: used for developement
+* Arduino IDE: copy content of main.cpp into Arduino IDE
 
 ## The following features are implemented
 * start WiFiManager if wifi access is not possible
@@ -19,17 +19,15 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 * manual switch status by pressing bottom
 * OTA update from webserver during startup
 * OTA update triggered from IDE
-* reset settings when buttom pressed during startup for 3 sec
+* reset settings when buttom pressed for 3 sec
 * connect sensor to jack for measurements
 * publish switch status, temperature, humidity and vcc
 * username/password for mqtt broker optional
-* reset settings during operation by pressing button for 3 sec
+* Deepsleep for longer battery live
 
 ## The following features are in progress
 * react faster when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
 * add last will for mqtt
-* CI for Project
-* maybe start on-demand wifi-setup instead of resetting all settings
 * maybe in case mqtt dies in operation, reconnect when switch changes
 
 ## Additional files
@@ -90,6 +88,7 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 
 ## tested hardware
 ### boards
+* esp12e
 * sonoffTH
 * HUZZAH ESP8266 breakout
 * Witty Cloud Modul
@@ -99,4 +98,6 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 * DHT11
 * DHT21
 * DHT22
-* ds18b22
+* DS1822
+* DS18B22
+* DS18S22
