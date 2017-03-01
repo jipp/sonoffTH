@@ -16,13 +16,17 @@ class DB {
   function create() {
     $create = "CREATE TABLE IF NOT EXISTS esp (mac TEXT PRIMARY KEY, version TEXT, comment TEXT)";
     $this->sqlite3->exec($create);
-	$create = "CREATE TABLE IF NOT EXISTS log (time TEXT PRIMARY KEY, mac TEXT, comment TEXT)";
-	$this->sqlite3->exec($create);
+    $create = "CREATE TABLE IF NOT EXISTS log (time TEXT PRIMARY KEY, mac TEXT, comment TEXT)";
+    $this->sqlite3->exec($create);
   }
 
   function checkMac($mac) {
     $count = $this->sqlite3->querySingle("SELECT COUNT(*) FROM esp WHERE mac = '$mac'");
     return $count;
+  }
+
+  function getIP($mac) {
+    echo "1.1.1.1";
   }
 
   function returnVersion($mac) {
@@ -35,7 +39,7 @@ class DB {
     echo "<tr> ";
     $pragma = $this->sqlite3->query("PRAGMA table_info('$table')");
     while($name = $pragma->fetchArray(SQLITE3_ASSOC)) {
-       echo "<th>". $name['name']."</th> ";
+      echo "<th>". $name['name']."</th> ";
     }
     echo "</tr>\n";
     $results = $this->sqlite3->query("SELECT * FROM '$table'");

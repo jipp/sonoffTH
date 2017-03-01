@@ -61,7 +61,7 @@ if (!check_header('HTTP_X_ESP8266_STA_MAC') ||
 
 if ($sql->checkMac($_SERVER['HTTP_X_ESP8266_STA_MAC'])==0) {
   header($_SERVER["SERVER_PROTOCOL"].' 500 not in table', true, 500);
-  $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], $_SERVER['HTTP_X_ESP8266_STA_MAC']." not in table");
+  $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], "not in table");
   $sql->insertVersion($_SERVER['HTTP_X_ESP8266_STA_MAC'], $_SERVER['HTTP_X_ESP8266_VERSION'], "automatically added");
 } else {
   if ($sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC']) != $_SERVER['HTTP_X_ESP8266_VERSION']) {
