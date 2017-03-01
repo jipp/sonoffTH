@@ -1,9 +1,16 @@
 #!/usr/bin/expect
 
+stty -echo
+send_user -- "Enter Password: "
+expect_user -re "(.*)\n"
+send_user "\n"
+stty echo
+set PASS $expect_out(1,string)
+
 spawn sftp pi@lemonpi
 
 expect "password: "
-send "!19WoKe67?\n"
+send "$PASS\n"
 
 expect "sftp> "
 send "lcd /Users/wolfgang.keller/Documents/PlatformIO/sonoffTH/bin\n"
