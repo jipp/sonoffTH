@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
 // defines
-// #define DEEPSLEEP  900
 #define DS1822  0x22
 #define DS18B20 0x28
 #define DS18S20 0x10
@@ -285,23 +284,10 @@ void checkForConfigReset() {
 }
 
 void resetConfig() {
-  //WiFiManager wifiManager;
-
   Serial << "reset config" << endl;
-  //SPIFFS.format();
-  //wifiManager.resetSettings();
   setupWiFiManager(false);
   Serial << "reset done" << endl;
-  //delay(3000);
   yield();
-  // ESP.reset();
-  /*  wifiManager.setTimeout(180);
-  if (!wifiManager.startConfigPortal("OnDemandAP")) {
-  Serial.println("failed to connect and hit timeout");
-  delay(3000);
-  ESP.reset();
-  delay(5000);
-}*/
 }
 
 void setupID() {
