@@ -29,6 +29,7 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 * react faster when mqtt broker is not responding (this seems to be a timeout when mqtt is reconnecting)
 * add last will for mqtt
 * maybe in case mqtt dies in operation, reconnect when switch changes
+* tell when woke up after Deepsleep
 
 ## Additional files
 
@@ -63,6 +64,18 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 ### esp12e
 check out the wiring here:
 http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
+
+### WeMos D1 mini pro
+* D0 -> gpio 16
+* D1 -> gpio 5
+* D2 -> gpio 4
+* D3 -> gpio 0
+* D4 -> gpio 2
+* D5 -> gpio 14
+* D6 -> gpio 12
+* D7 -> gpio 13
+* D8 -> gpio 15
+For Deepsleep connect D0 -> RST
 
 ## Info
 ### enable verbose output (default not defined)
