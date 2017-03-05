@@ -222,6 +222,7 @@ void setupHardware() {
 }
 
 void printSettings() {
+  Serial << endl << endl << "RESETINFO: " << ESP.getResetInfo() << endl;
   Serial << endl << "VERSION: " << VERSION << endl;
   #ifdef VERBOSE
   #ifdef DEEPSLEEP
