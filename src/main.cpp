@@ -64,6 +64,7 @@ const char file[]="/config.json";
 const unsigned long timerMeasureIntervall = 60;
 const unsigned long timerLastReconnect = 60;
 const unsigned long timerButtonPressedReset = 3;
+const int qos = 1;
 
 
 // switch adc port to monitor vcc
@@ -359,7 +360,7 @@ bool connect() {
     publishSwitchState();
     #endif
     publishValues();
-    pubSubClient.subscribe(subscribeSwitchTopic.c_str());
+    pubSubClient.subscribe(subscribeSwitchTopic.c_str(), qos);
     ticker.detach();
     digitalWrite(LED, LEDOFF);
   } else {
