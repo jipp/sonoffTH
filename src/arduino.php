@@ -13,7 +13,7 @@ function test() {
     "HTTP_X_ESP8266_SKETCH_SIZE" => "373940",
     "HTTP_X_ESP8266_CHIP_SIZE" => "524288",
     "HTTP_X_ESP8266_SDK_VERSION" => "DOOR-7-g14f53a19",
-    "HTTP_X_ESP8266_VERSION" => "esp8266-v1.3.1",
+    "HTTP_X_ESP8266_VERSION" => "esp8266-v1.4.0",
     "SERVER_PROTOCOL" => "HTTP/1.0"
   );
 }

@@ -25,16 +25,14 @@ class DB {
     return $count;
   }
 
-  function getIP($mac) {
-    echo "1.1.1.1";
-  }
-
   function returnVersion($mac) {
     $version = $this->sqlite3->querySingle("SELECT version FROM esp WHERE mac = '$mac'");
     return $version;
   }
 
   function selectAll($table) {
+	$count = $this->sqlite3->querySingle("SELECT COUNT(*) FROM '$table'");
+	echo "Number of entries: ".$count."<br>\n";
     echo "<table border=1>\n";
     echo "<tr> ";
     $pragma = $this->sqlite3->query("PRAGMA table_info('$table')");
