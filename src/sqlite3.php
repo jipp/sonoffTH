@@ -52,7 +52,8 @@ class DB {
   }
 
   function insertLog($mac, $comment) {
-    $insert = "INSERT INTO log VALUES (datetime('now', 'localtime'), '$mac', '$comment')";
+//    $insert = "INSERT INTO log VALUES (datetime('now', 'localtime'), '$mac', '$comment')";
+    $insert = "INSERT INTO log VALUES (strftime('%Y-%m-%d %H:%M:%f'), '$mac', '$comment')";
     $this->sqlite3->exec($insert);
   }
 
