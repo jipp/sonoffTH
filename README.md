@@ -32,6 +32,34 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 * tell when woke up after Deepsleep
 
 ## Additional files
+For OTA update triggered by the esp a set of php files are needed. Below is a list of the php- and bin-files and how they are placed inside the file system (using lighttpd with php):
+
+```
+/var/www/html/esp/
+/var/www/html/esp/update
+/var/www/html/esp/update/esp.php
+/var/www/html/esp/update/log.php
+/var/www/html/esp/update/index.php
+/var/www/html/esp/update/mac.php
+/var/www/html/esp/update/arduino.php
+/var/www/html/esp/update/arduino.db
+/var/www/html/esp/update/sqlite3.php
+/var/www/html/esp/update/bin
+/var/www/html/esp/update/bin/sonoffTH-sonoffTH-v0.4.1.bin
+/var/www/html/esp/update/bin/sonoffTH-esp12e-v0.4.0.bin
+/var/www/html/esp/update/bin/sonoffTH-esp12e-v0.4.1.bin
+/var/www/html/esp/update/bin/sonoffTH-witty-v0.4.1.bin
+/var/www/html/esp/update/bin/sonoffTH-huzzah-v0.4.1.bin
+/var/www/html/esp/update/bin/sonoffTH-sonoffTH-v0.4.0.bin
+/var/www/html/esp/update/bin/sonoffTH-witty-v0.4.0.bin
+/var/www/html/esp/update/bin/sonoffTH-wemosPro-v0.4.1.bin
+/var/www/html/esp/update/bin/sonoffTH-wemosPro-v0.4.0.bin
+/var/www/html/esp/update/bin/esp8266-v1.3.1.bin
+/var/www/html/esp/update/bin/sonoffTH-huzzah-v0.4.0.bin
+/var/www/html/esp/update/arp.php
+```
+
+The .db file is automatically created first time an esp tries to update via OTA and calls the arduino.php script.
 
 ## Needed Libraries
 * [  1  ] OneWire
