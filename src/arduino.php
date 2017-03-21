@@ -73,8 +73,8 @@ if ($sql->checkMac($_SERVER['HTTP_X_ESP8266_STA_MAC'])==0) {
       $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], $sql->returnVersion($_SERVER['HTTP_X_ESP8266_STA_MAC']).".bin no file available");
     }
   } else {
-    header($_SERVER["SERVER_PROTOCOL"].' 304 version not modified', true, 304);
-    $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], "version not modified");
+//    header($_SERVER["SERVER_PROTOCOL"].' 304 version not modified', true, 304);
+//    $sql->insertLog($_SERVER['HTTP_X_ESP8266_STA_MAC'], "version not modified");
   }
 }
 
