@@ -16,7 +16,7 @@ class DB {
   function create() {
     $create = "CREATE TABLE IF NOT EXISTS esp (mac TEXT PRIMARY KEY, version TEXT, comment TEXT)";
     $this->sqlite3->exec($create);
-    $create = "CREATE TABLE IF NOT EXISTS log (time TEXT PRIMARY KEY, mac TEXT, comment TEXT)";
+    $create = "CREATE TABLE IF NOT EXISTS log (time TEXT PRIMARY KEY, mac TEXT PRIMARY KEY, comment TEXT)";
     $this->sqlite3->exec($create);
   }
 
