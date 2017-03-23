@@ -14,9 +14,9 @@ class DB {
   }
 
   function create() {
-    $create = "CREATE TABLE IF NOT EXISTS esp (mac TEXT PRIMARY KEY, version TEXT, comment TEXT)";
+	$create = "CREATE TABLE IF NOT EXISTS esp (id INTEGER PRIMARY KEY AUTOINCREMENT, mac TEXT NOT NULL, version TEXT NOT NULL, comment TEXT)";
     $this->sqlite3->exec($create);
-    $create = "CREATE TABLE IF NOT EXISTS log (time TEXT PRIMARY KEY, mac TEXT PRIMARY KEY, comment TEXT)";
+	$create = "CREATE TABLE IF NOT EXISTS log (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT NOT NULL, mac TEXT NOT NULL, comment TEXT)";
     $this->sqlite3->exec($create);
   }
 
@@ -52,13 +52,12 @@ class DB {
   }
 
   function insertLog($mac, $comment) {
-//    $insert = "INSERT INTO log VALUES (datetime('now', 'localtime'), '$mac', '$comment')";
-    $insert = "INSERT INTO log VALUES (strftime('%Y-%m-%d %H:%M:%f'), '$mac', '$comment')";
+    $insert = "INSERT INTO log (time, mac, comment) VALUES (strftime('%Y-%m-%d %H:%M:%f'), '$mac', '$comment')";
     $this->sqlite3->exec($insert);
   }
 
   function insertVersion($mac, $version, $comment) {
-    $insert = "INSERT INTO esp VALUES ('$mac', '$version', '$comment')";
+    $insert = "INSERT INTO esp (mac, version, comment) VALUES ('$mac', '$version', '$comment')";
     $this->sqlite3->exec($insert);
   }
 
