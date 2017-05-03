@@ -8,21 +8,22 @@ cache:
         - "~/.platformio"
 
 env:
-     - PLATFORMIO_CI_SRC=sonoffTH/src/main.cpp
+     - PLATFORMIO_CI_SRC=src/main.cpp
 
 install:
     - pip install -U platformio
     - platformio lib -g install 1 19 31 54 64 89 560 1265
 
 script:
-    - platformio run -e bare
-    - platformio run -e bare-DHT
-    - platformio run -e bare-DS
-    - platformio run -e bare-DEEPSLEEP
-    - platformio run -e bare-DEEPSLEEP-DHT
-    - platformio run -e bare-DEEPSLEEP-DS
-    - platformio run -e esp12e
-    - platformio run -e huzzah
-    - platformio run -e witty
-    - platformio run -e sonoffTH
-    - platformio run -e WeMosD1minipro
+#    - platformio run -e bare
+#    - platformio run -e bare-DHT
+#    - platformio run -e bare-DS
+#    - platformio run -e bare-DEEPSLEEP
+#    - platformio run -e bare-DEEPSLEEP-DHT
+#    - platformio run -e bare-DEEPSLEEP-DS
+#    - platformio run -e esp12e
+#    - platformio run -e huzzah
+#    - platformio run -e witty
+#    - platformio run -e sonoffTH
+#    - platformio run -e WeMosD1minipro
+    - platformio ci --project-conf=platformio.ini
