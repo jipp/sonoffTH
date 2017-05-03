@@ -69,6 +69,7 @@ The .db file is automatically created first time an esp tries to update via OTA 
 * [ 64  ] ArduinoJson
 * [ 89  ] PubSubClient
 * [ 560 ] Streaming
+* [ 567 ] WifiManager
 * [ 962 ] mbed-drivers
 * [1265 ] WiFiManager
 
