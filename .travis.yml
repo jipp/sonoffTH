@@ -12,7 +12,7 @@ env:
 
 install:
     - pip install -U platformio
-    - platformio lib -g install 1 19 31 54 64 89 560 1265
+    - platformio lib -g install 1 19 31 54 64 89 560 567 1265
 
 script:
 #    - platformio run -e bare
