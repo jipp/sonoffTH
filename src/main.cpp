@@ -4,12 +4,17 @@
 #define DS1822  0x22
 #define DS18B20 0x28
 #define DS18S20 0x10
+#define LUX     0x6D6
 
 #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
 #include <DHT.h>
 #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#endif
+#if (I2C == LUX)
+#include <Wire.h>
+#include <BH1750.h>
 #endif
 
 #ifndef VERSION
@@ -41,7 +46,7 @@
 #endif
 
 
-// libaries
+// libraries
 #include <Streaming.h>
 #include <Ticker.h>
 #include <FS.h>
@@ -80,6 +85,9 @@ DHT dht(JACK, SENSOR);
 OneWire oneWire(JACK);
 DallasTemperature dallasTemperature(&oneWire);
 #endif
+#if (I2C == LUX)
+BH1750 lightMeter;
+#endif
 WiFiClient wifiClient;
 
 
@@ -99,6 +107,7 @@ String publishSwitchTopic = "/switch/state";
 String publishVccTopic = "/vcc/value";
 String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
+String publishLuxTopic = "/lux/value";
 
 
 // callback functions
@@ -217,6 +226,9 @@ void setupHardware() {
   #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
   dallasTemperature.begin();
   #endif
+  #if (I2C == LUX)
+  lightMeter.begin();
+  #endif
   pinMode(BUTTON, INPUT_PULLUP);
   pinMode(RELAY, OUTPUT);
   pinMode(LED, OUTPUT);
@@ -235,6 +247,9 @@ void printSettings() {
   Serial << "JACK: " << JACK << endl;
   #ifdef SENSOR
   Serial << "SENSOR: " << SENSOR << endl;
+  #endif
+  #ifdef I2C
+  Serial << "I2C: " << LUX << endl;
   #endif
   Serial << "LEDOFF: " << LEDOFF << endl;
   Serial << "SERVER: " << SERVER << endl;
@@ -309,6 +324,9 @@ void publishValues() {
   #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
   float temperature;
   #endif
+  #if (I2C == LUX)
+  unsigned short lux = lightMeter.readLightLevel();
+  #endif
 
   if (pubSubClient.connected()) {
     if (pubSubClient.publish(publishVccTopic.c_str(),
@@ -338,6 +356,15 @@ void publishValues() {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
     } else {
       Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
+    }
+    #endif
+    #if (I2C == LUX)
+    lux = lightMeter.readLightLevel();
+    if (pubSubClient.publish(publishLuxTopic.c_str(),
+    String(lux).c_str())) {
+      Serial << " < " << publishLuxTopic << ": " << lux << endl;
+    } else {
+      Serial << "!< " << publishLuxTopic << ": " << lux << endl;
     }
     #endif
   }
@@ -404,6 +431,7 @@ void setupTopic() {
   publishVccTopic = id + publishVccTopic;
   publishTemperatureTopic = id + publishTemperatureTopic;
   publishHumidityTopic = id + publishHumidityTopic;
+  publishLuxTopic = id + publishLuxTopic;
 }
 
 void shutPubSub() {

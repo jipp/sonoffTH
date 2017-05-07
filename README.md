@@ -1,15 +1,10 @@
 [![Build Status](https://travis-ci.org/jipp/sonoffTH.svg?branch=master)](https://travis-ci.org/jipp/sonoffTH)
 
-[![GitHub issues](https://img.shields.io/github/issues/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/issues)
-[![GitHub forks](https://img.shields.io/github/forks/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/network)
-[![GitHub stars](https://img.shields.io/github/stars/jipp/sonoffTH.svg)](https://github.com/jipp/sonoffTH/stargazers)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jipp/sonoffTH/master/LICENSE)
-
 # sonoffTH
 Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used as well with other boards.
 
 ## IDE
-* PlatformIO IDE: used for developement
+* PlatformIO IDE: used for development
 * Arduino IDE: copy content of main.cpp into Arduino IDE
 
 ## The following features are implemented
@@ -19,7 +14,7 @@ Firmware for the sonoffTH (based on ESP8266) written with PlatformIO, to be used
 * manual switch status by pressing bottom
 * OTA update from webserver during startup
 * OTA update triggered from IDE
-* reset settings when buttom pressed for 3 sec
+* reset settings when button pressed for 3 sec
 * connect sensor to jack for measurements
 * publish switch status, temperature, humidity and vcc
 * username/password for mqtt broker optional
@@ -68,6 +63,7 @@ The .db file is automatically created first time an esp tries to update via OTA 
 * [ 54  ] DallasTemperature
 * [ 64  ] ArduinoJson
 * [ 89  ] PubSubClient
+* [ 439 ] BH1750
 * [ 560 ] Streaming
 * [ 567 ] WifiManager
 * [ 962 ] mbed-drivers
@@ -96,8 +92,8 @@ http://www.esp8266.com/wiki/doku.php?id=getting-started-with-the-esp8266
 
 ### WeMos D1 mini pro
 * D0 -> gpio 16
-* D1 -> gpio 5
-* D2 -> gpio 4
+* D1 -> gpio 5 (SCL)
+* D2 -> gpio 4 (SDA)
 * D3 -> gpio 0
 * D4 -> gpio 2
 * D5 -> gpio 14
@@ -136,10 +132,13 @@ For Deepsleep connect D0 -> RST
 * Witty Cloud Modul
 * WeMos D1 Mini Pro
 
-### sensors
-* DHT11
-* DHT21
-* DHT22
-* DS1822
-* DS18B22
-* DS18S22
+### tested sensors
+* OneWire
+  * DHT11 (temperature and humidity)
+  * DHT21 (temperature and humidity)
+  * DHT22 (temperature and humidity)
+  * DS1822 (temperature)
+  * DS18B22 (temperature)
+  * DS18S22 (temperature)
+* I2C (Wire)
+  * BH1750 (lux)
