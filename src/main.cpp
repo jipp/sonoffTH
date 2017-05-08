@@ -6,13 +6,14 @@
 #define DS18S20 0x10
 #define LUX     0x6D6
 
-#if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
+#if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
 #include <DHT.h>
-#elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+#endif
+#if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #endif
-#if (I2C == LUX)
+#if (I2CSENSOR == LUX)
 #include <Wire.h>
 #include <BH1750.h>
 #endif
@@ -29,8 +30,11 @@
 #ifndef LED
 #define LED     13
 #endif
-#ifndef JACK
-#define JACK    14
+#ifndef DHTJACK
+#define DHTJACK    14
+#endif
+#ifndef ONEWIREJACK
+#define ONEWIREJACK    14
 #endif
 #ifndef LEDOFF
 #define LEDOFF  HIGH
@@ -79,13 +83,14 @@ ADC_MODE(ADC_VCC);
 // global definitions
 Ticker ticker;
 PubSubClient pubSubClient;
-#if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
-DHT dht(JACK, SENSOR);
-#elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
-OneWire oneWire(JACK);
+#if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
+DHT dht(DHTJACK, DHTSENSOR);
+#endif
+#if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
+OneWire oneWire(ONEWIREJACK);
 DallasTemperature dallasTemperature(&oneWire);
 #endif
-#if (I2C == LUX)
+#if (I2CSENSOR == LUX)
 BH1750 lightMeter;
 #endif
 WiFiClient wifiClient;
@@ -221,12 +226,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setupHardware() {
   Serial.begin(115200);
   ticker.attach(0.3, tick);
-  #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
+  #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
   dht.begin();
-  #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+  #endif
+  #if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   dallasTemperature.begin();
   #endif
-  #if (I2C == LUX)
+  #if (I2CSENSOR == LUX)
   lightMeter.begin();
   #endif
   pinMode(BUTTON, INPUT_PULLUP);
@@ -244,12 +250,16 @@ void printSettings() {
   Serial << "BUTTON: " << BUTTON << endl;
   Serial << "RELAY: " << RELAY << endl;
   Serial << "LED: " << LED << endl;
-  Serial << "JACK: " << JACK << endl;
-  #ifdef SENSOR
-  Serial << "SENSOR: " << SENSOR << endl;
+  Serial << "DHTJACK: " << DHTJACK << endl;
+  Serial << "ONEWIREJACK: " << ONEWIREJACK << endl;
+  #ifdef DHT
+  Serial << "DHT: " << DHTSENSOR << endl;
   #endif
-  #ifdef I2C
-  Serial << "I2C: " << LUX << endl;
+  #ifdef ONEWIRE
+  Serial << "ONEWIRESENSOR: " << ONEWIRESENSOR << endl;
+  #endif
+  #ifdef I2CSENSOR
+  Serial << "I2CSENSOR: " << LUX << endl;
   #endif
   Serial << "LEDOFF: " << LEDOFF << endl;
   Serial << "SERVER: " << SERVER << endl;
@@ -318,13 +328,13 @@ void setupID() {
 
 void publishValues() {
   unsigned int vcc = ESP.getVcc();
-  #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
+  #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
-  #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+  #elif (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   float temperature;
   #endif
-  #if (I2C == LUX)
+  #if (I2CSENSOR == LUX)
   unsigned short lux = lightMeter.readLightLevel();
   #endif
 
@@ -335,7 +345,7 @@ void publishValues() {
     } else {
       Serial << "!< " << publishVccTopic << ": " << vcc << endl;
     }
-    #if (SENSOR == DHT11) || (SENSOR == DHT21) || (SENSOR == DHT22)
+    #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
     if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
     String(temperature).c_str())) {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
@@ -348,7 +358,7 @@ void publishValues() {
     } else {
       Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
     }
-    #elif (SENSOR == DS1822) || (SENSOR == DS18B20) || (SENSOR == DS18S20)
+    #elif (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
     dallasTemperature.requestTemperatures();
     temperature = dallasTemperature.getTempCByIndex(0);
     if (pubSubClient.publish(publishTemperatureTopic.c_str(),
@@ -358,7 +368,7 @@ void publishValues() {
       Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
     }
     #endif
-    #if (I2C == LUX)
+    #if (I2CSENSOR == LUX)
     lux = lightMeter.readLightLevel();
     if (pubSubClient.publish(publishLuxTopic.c_str(),
     String(lux).c_str())) {

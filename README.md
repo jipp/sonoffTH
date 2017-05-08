@@ -54,7 +54,7 @@ For OTA update triggered by the esp a set of php files are needed. Below is a li
 /var/www/html/esp/update/arp.php
 ```
 
-The .db file is automatically created first time an esp tries to update via OTA and calls the arduino.php script.
+The arduino.db file is automatically created first time an esp tries to update via OTA and calls the arduino.php script.
 
 ## Needed Libraries
 * [  1  ] OneWire
@@ -107,21 +107,22 @@ For Deepsleep connect D0 -> RST
 * #define VERBOSE
 
 ### enable deep sleep (default not defined)
-* #define DEEPSLEEP 900
+* #define DEEPSLEEP 1200
 
 ### default gpio settings
 * ADC -> voltage measurement
-* #define BUTTON  0   -> gpio 0
-* #define RELAY   12  -> gpio 12 (relay and red LED)
-* #define LED     13  -> gpio 13 (blue LED)
-* #define JACK    14  -> gpio 14
+* #define BUTTON      0   -> gpio 0
+* #define RELAY       12  -> gpio 12
+* #define LED         13  -> gpio 13
+* #define DHTJACK     14  -> gpio 14
+* #define ONEWIREJACK 14  -> gpio 14
 
 ### default settings for OTA at startup via webserver
 * #define SERVER  "lemonpi"
 * #define PORT    80
 * #define PATH    "/esp/update/arduino.php"
 
-### level when LED is off
+### default level when LED is off
 * #define LEDOFF  HIGH
 
 ## tested hardware
@@ -133,12 +134,13 @@ For Deepsleep connect D0 -> RST
 * WeMos D1 Mini Pro
 
 ### tested sensors
+* DHT
+  * DHT11 (temperature and humidity)  - DHTSENSOR=DHT11
+  * DHT21 (temperature and humidity)  - DHTSENSOR=DHT21
+  * DHT22 (temperature and humidity)  - DHTSENSOR=DHT22
 * OneWire
-  * DHT11 (temperature and humidity)
-  * DHT21 (temperature and humidity)
-  * DHT22 (temperature and humidity)
-  * DS1822 (temperature)
-  * DS18B22 (temperature)
-  * DS18S22 (temperature)
+  * DS1822 (temperature)              - ONEWIRE=DS18B20
+  * DS18B22 (temperature)             - ONEWIRE=DS18B22
+  * DS18S22 (temperature)             - ONEWIRE=DS18S22
 * I2C (Wire)
-  * BH1750 (lux)
+  * BH1750 (lux)                      - I2CSENSOR=LUX
