@@ -243,7 +243,6 @@ void setupHardware() {
 void printSettings() {
   Serial << endl << endl << "RESETINFO: " << ESP.getResetInfo() << endl;
   Serial << endl << "VERSION: " << VERSION << endl;
-  #ifdef VERBOSE
   #ifdef DEEPSLEEP
   Serial << "DEEPSLEEP: " << DEEPSLEEP << "s" << endl;
   #endif
@@ -252,10 +251,10 @@ void printSettings() {
   Serial << "LED: " << LED << endl;
   Serial << "DHTJACK: " << DHTJACK << endl;
   Serial << "ONEWIREJACK: " << ONEWIREJACK << endl;
-  #ifdef DHT
+  #ifdef DHTSENSOR
   Serial << "DHT: " << DHTSENSOR << endl;
   #endif
-  #ifdef ONEWIRE
+  #ifdef ONEWIRESENSOR
   Serial << "ONEWIRESENSOR: " << ONEWIRESENSOR << endl;
   #endif
   #ifdef I2CSENSOR
@@ -266,7 +265,6 @@ void printSettings() {
   Serial << "PORT: " << PORT << endl;
   Serial << "PATH: " << PATH << endl;
   Serial << endl;
-  #endif
 }
 
 void setupPubSub() {
@@ -339,21 +337,18 @@ void publishValues() {
   #endif
 
   if (pubSubClient.connected()) {
-    if (pubSubClient.publish(publishVccTopic.c_str(),
-    String(vcc).c_str())) {
+    if (pubSubClient.publish(publishVccTopic.c_str(), String(vcc).c_str())) {
       Serial << " < " << publishVccTopic << ": " << vcc << endl;
     } else {
       Serial << "!< " << publishVccTopic << ": " << vcc << endl;
     }
     #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
-    if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(),
-    String(temperature).c_str())) {
+    if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(), String(temperature).c_str())) {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
     } else {
       Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
     }
-    if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(),
-    String(humidity).c_str())) {
+    if (!isnan(humidity) && pubSubClient.publish(publishHumidityTopic.c_str(), String(humidity).c_str())) {
       Serial << " < " << publishHumidityTopic << ": " << humidity << endl;
     } else {
       Serial << "!< " << publishHumidityTopic << ": " << humidity << endl;
@@ -361,8 +356,7 @@ void publishValues() {
     #elif (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
     dallasTemperature.requestTemperatures();
     temperature = dallasTemperature.getTempCByIndex(0);
-    if (pubSubClient.publish(publishTemperatureTopic.c_str(),
-    String(temperature).c_str())) {
+    if (pubSubClient.publish(publishTemperatureTopic.c_str(), String(temperature).c_str())) {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
     } else {
       Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
@@ -370,8 +364,7 @@ void publishValues() {
     #endif
     #if (I2CSENSOR == LUX)
     lux = lightMeter.readLightLevel();
-    if (pubSubClient.publish(publishLuxTopic.c_str(),
-    String(lux).c_str())) {
+    if (pubSubClient.publish(publishLuxTopic.c_str(), String(lux).c_str())) {
       Serial << " < " << publishLuxTopic << ": " << lux << endl;
     } else {
       Serial << "!< " << publishLuxTopic << ": " << lux << endl;
@@ -512,8 +505,6 @@ void setupWiFiManager(bool autoConnect) {
   wifiManager.addParameter(&custom_mqtt_port);
   wifiManager.addParameter(&custom_mqtt_username);
   wifiManager.addParameter(&custom_mqtt_password);
-  //wifiManager.resetSettings();
-  //SPIFFS.format();
   if (autoConnect) {
     wifiManager.setTimeout(180);
     if (!wifiManager.autoConnect("AutoConnectAP")) {
