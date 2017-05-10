@@ -5,6 +5,7 @@
 #define DS18B20 0x28
 #define DS18S20 0x10
 #define LUX     0x6D6
+#define SHT3X   0x11
 
 #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
 #include <DHT.h>
@@ -16,6 +17,8 @@
 #if (I2CSENSOR == LUX)
 #include <Wire.h>
 #include <BH1750.h>
+#elif (I2CSENSOR == SHT3X)
+#include <Wire.h>
 #endif
 
 #ifndef VERSION
@@ -234,6 +237,8 @@ void setupHardware() {
   #endif
   #if (I2CSENSOR == LUX)
   lightMeter.begin();
+  #elif (I2CSENSOR == SHT3X)
+  Wire.begin();
   #endif
   pinMode(BUTTON, INPUT_PULLUP);
   pinMode(RELAY, OUTPUT);
@@ -258,7 +263,7 @@ void printSettings() {
   Serial << "ONEWIRESENSOR: " << ONEWIRESENSOR << endl;
   #endif
   #ifdef I2CSENSOR
-  Serial << "I2CSENSOR: " << LUX << endl;
+  Serial << "I2CSENSOR: " << I2CSENSOR << endl;
   #endif
   Serial << "LEDOFF: " << LEDOFF << endl;
   Serial << "SERVER: " << SERVER << endl;
@@ -334,6 +339,24 @@ void publishValues() {
   #endif
   #if (I2CSENSOR == LUX)
   unsigned short lux = lightMeter.readLightLevel();
+  #elif (I2CSENSOR == SHT3X)
+  unsigned int data[6];
+  Wire.beginTransmission(0x45);
+  Wire.write(0x2C);
+  Wire.write(0x06);
+  Wire.endTransmission();
+  delay(500);
+  Wire.requestFrom(0x45, 6);
+  if (Wire.available() == 6) {
+    data[0] = Wire.read();
+    data[1] = Wire.read();
+    data[2] = Wire.read();
+    data[3] = Wire.read();
+    data[4] = Wire.read();
+    data[5] = Wire.read();
+  }
+  float temperature = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45;
+  float humidity = ((((data[3] * 256.0) + data[4]) * 100) / 65535.0);
   #endif
 
   if (pubSubClient.connected()) {
@@ -342,7 +365,7 @@ void publishValues() {
     } else {
       Serial << "!< " << publishVccTopic << ": " << vcc << endl;
     }
-    #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
+    #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22) || (I2CSENSOR == SHT3X)
     if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(), String(temperature).c_str())) {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
     } else {
