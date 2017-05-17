@@ -4,8 +4,6 @@
 #define DS1822  0x22
 #define DS18B20 0x28
 #define DS18S20 0x10
-#define LUX     0x6D6
-#define SHT3X   0x11
 
 #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
 #include <DHT.h>
@@ -14,10 +12,11 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #endif
-#if (I2CSENSOR == LUX)
+#if defined (LUX)
 #include <Wire.h>
 #include <BH1750.h>
-#elif (I2CSENSOR == SHT3X)
+#endif
+#if defined(SHT3X)
 #include <Wire.h>
 #endif
 
@@ -93,7 +92,7 @@ DHT dht(DHTJACK, DHTSENSOR);
 OneWire oneWire(ONEWIREJACK);
 DallasTemperature dallasTemperature(&oneWire);
 #endif
-#if (I2CSENSOR == LUX)
+#if defined(LUX)
 BH1750 lightMeter;
 #endif
 WiFiClient wifiClient;
@@ -235,9 +234,10 @@ void setupHardware() {
   #if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   dallasTemperature.begin();
   #endif
-  #if (I2CSENSOR == LUX)
+  #if defined(LUX)
   lightMeter.begin();
-  #elif (I2CSENSOR == SHT3X)
+  #endif
+  #if defined(SHT3X)
   Wire.begin();
   #endif
   pinMode(BUTTON, INPUT_PULLUP);
@@ -262,8 +262,11 @@ void printSettings() {
   #ifdef ONEWIRESENSOR
   Serial << "ONEWIRESENSOR: " << ONEWIRESENSOR << endl;
   #endif
-  #ifdef I2CSENSOR
-  Serial << "I2CSENSOR: " << I2CSENSOR << endl;
+  #ifdef LUX
+  Serial << "I2CSENSOR: LUX" << endl;
+  #endif
+  #ifdef SHT3X
+  Serial << "I2CSENSOR: SHT3X" << endl;
   #endif
   Serial << "LEDOFF: " << LEDOFF << endl;
   Serial << "SERVER: " << SERVER << endl;
@@ -337,9 +340,10 @@ void publishValues() {
   #elif (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   float temperature;
   #endif
-  #if (I2CSENSOR == LUX)
+  #if defined(LUX)
   unsigned short lux = lightMeter.readLightLevel();
-  #elif (I2CSENSOR == SHT3X)
+  #endif
+  #if defined(SHT3X)
   unsigned int data[6];
   Wire.beginTransmission(0x45);
   Wire.write(0x2C);
@@ -365,7 +369,7 @@ void publishValues() {
     } else {
       Serial << "!< " << publishVccTopic << ": " << vcc << endl;
     }
-    #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22) || (I2CSENSOR == SHT3X)
+    #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22) || defined(SHT3X)
     if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(), String(temperature).c_str())) {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
     } else {
@@ -385,7 +389,7 @@ void publishValues() {
       Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
     }
     #endif
-    #if (I2CSENSOR == LUX)
+    #if defined(LUX)
     lux = lightMeter.readLightLevel();
     if (pubSubClient.publish(publishLuxTopic.c_str(), String(lux).c_str())) {
       Serial << " < " << publishLuxTopic << ": " << lux << endl;
