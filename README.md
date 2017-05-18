@@ -59,15 +59,12 @@ The arduino.db file is automatically created first time an esp tries to update v
 ## Needed Libraries
 * [  1  ] OneWire
 * [ 19  ] DHT sensor library
-* [ 31  ] Adafruit Unified Sensor
 * [ 54  ] DallasTemperature
 * [ 64  ] ArduinoJson
 * [ 89  ] PubSubClient
 * [ 439 ] BH1750
 * [ 560 ] Streaming
 * [ 567 ] WifiManager
-* [ 962 ] mbed-drivers
-* [1265 ] WiFiManager
 
 ## Board Settings
 ### sonoffTH - ESP8266: 1M (64k SPIFFS)
@@ -143,4 +140,5 @@ For Deepsleep connect D0 -> RST
   * DS18B22 (temperature)             - ONEWIRE=DS18B22
   * DS18S22 (temperature)             - ONEWIRE=DS18S22
 * I2C (Wire)
-  * BH1750 (lux)                      - I2CSENSOR=LUX
+  * BH1750 (lux)                      - LUX
+  * SHT3X (temperature and humidity)  - SHT3X
