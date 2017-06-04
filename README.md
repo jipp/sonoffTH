@@ -63,6 +63,7 @@ The arduino.db file is automatically created first time an esp tries to update v
 * [ 64  ] ArduinoJson
 * [ 89  ] PubSubClient
 * [ 439 ] BH1750
+* [ 525 ] Adafruit BMP085 Library
 * [ 560 ] Streaming
 * [ 567 ] WifiManager
 
@@ -142,3 +143,4 @@ For Deepsleep connect D0 -> RST
 * I2C (Wire)
   * BH1750 (lux)                      - LUX
   * SHT3X (temperature and humidity)  - SHT3X
+  * BMP (pressure)                    - BMP
