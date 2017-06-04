@@ -12,12 +12,16 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #endif
-#if defined (LUX)
+#ifdef LUX
 #include <Wire.h>
 #include <BH1750.h>
 #endif
-#if defined(SHT3X)
+#ifdef SHT3X
 #include <Wire.h>
+#endif
+#ifdef BMP
+#include <Wire.h>
+#include <Adafruit_BMP085.h>
 #endif
 
 #ifndef VERSION
@@ -92,8 +96,11 @@ DHT dht(DHTJACK, DHTSENSOR);
 OneWire oneWire(ONEWIREJACK);
 DallasTemperature dallasTemperature(&oneWire);
 #endif
-#if defined(LUX)
+#ifdef LUX
 BH1750 lightMeter;
+#endif
+#ifdef BMP
+Adafruit_BMP085 bmp;
 #endif
 WiFiClient wifiClient;
 
@@ -115,6 +122,7 @@ String publishVccTopic = "/vcc/value";
 String publishTemperatureTopic = "/temperature/value";
 String publishHumidityTopic = "/humidity/value";
 String publishLuxTopic = "/lux/value";
+String publishPressureTopic = "/pressure/value";
 
 
 // callback functions
@@ -234,11 +242,14 @@ void setupHardware() {
   #if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   dallasTemperature.begin();
   #endif
-  #if defined(LUX)
+  #ifdef LUX
   lightMeter.begin();
   #endif
-  #if defined(SHT3X)
+  #ifdef SHT3X
   Wire.begin();
+  #endif
+  #ifdef BMP
+  bmp.begin();
   #endif
   pinMode(BUTTON, INPUT_PULLUP);
   pinMode(RELAY, OUTPUT);
@@ -267,6 +278,9 @@ void printSettings() {
   #endif
   #ifdef SHT3X
   Serial << "I2CSENSOR: SHT3X" << endl;
+  #endif
+  #ifdef BMP
+  Serial << "I2CSENSOR: BMP" << endl;
   #endif
   Serial << "LEDOFF: " << LEDOFF << endl;
   Serial << "SERVER: " << SERVER << endl;
@@ -340,10 +354,13 @@ void publishValues() {
   #elif (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   float temperature;
   #endif
-  #if defined(LUX)
+  #ifdef LUX
   unsigned short lux = lightMeter.readLightLevel();
   #endif
-  #if defined(SHT3X)
+  #ifdef BMP
+  float pressure = (float) bmp.readPressure() / 100;
+  #endif
+  #ifdef SHT3X
   unsigned int data[6];
   Wire.beginTransmission(0x45);
   Wire.write(0x2C);
@@ -389,12 +406,18 @@ void publishValues() {
       Serial << "!< " << publishTemperatureTopic << ": " << temperature << endl;
     }
     #endif
-    #if defined(LUX)
-    lux = lightMeter.readLightLevel();
+    #ifdef LUX
     if (pubSubClient.publish(publishLuxTopic.c_str(), String(lux).c_str())) {
       Serial << " < " << publishLuxTopic << ": " << lux << endl;
     } else {
       Serial << "!< " << publishLuxTopic << ": " << lux << endl;
+    }
+    #endif
+    #ifdef BMP
+    if (pubSubClient.publish(publishPressureTopic.c_str(), String(pressure).c_str())) {
+      Serial << " < " << publishPressureTopic << ": " << pressure << endl;
+    } else {
+      Serial << "!< " << publishPressureTopic << ": " << pressure << endl;
     }
     #endif
   }
@@ -462,6 +485,7 @@ void setupTopic() {
   publishTemperatureTopic = id + publishTemperatureTopic;
   publishHumidityTopic = id + publishHumidityTopic;
   publishLuxTopic = id + publishLuxTopic;
+  publishPressureTopic = id + publishPressureTopic;
 }
 
 void shutPubSub() {
