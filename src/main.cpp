@@ -128,18 +128,22 @@ String publishPressureTopic = "/pressure/value";
 // callback functions
 void tick();
 void saveConfigCallback ();
+#if !defined(DEEPSLEEP) && defined(SWITCH)
 void callback(char*, byte*, unsigned int);
+#endif
 
 
 // functions
 void setupHardware();
 void printSettings();
-void readSwitchStateEEPROM();
-void writeSwitchStateEEPROM();
 void setupPubSub();
 void checkForConfigReset();
 void resetConfig();
+#if !defined(DEEPSLEEP) && defined(SWITCH)
+void readSwitchStateEEPROM();
+void writeSwitchStateEEPROM();
 void publishSwitchState();
+#endif
 void setupID();
 void publishValues();
 bool connect();
@@ -157,7 +161,9 @@ void readConfig();
 void setup() {
   setupHardware();
   printSettings();
+  #if !defined(DEEPSLEEP) && defined(SWITCH)
   readSwitchStateEEPROM();
+  #endif
   checkForConfigReset();
   setupWiFiManager(true);
   updater();
@@ -198,6 +204,7 @@ void loop() {
     if (millis() - timerButtonPressedStart > timerButtonPressedReset * 1000) {
       calculate = false;
       resetConfig();
+      #if !defined(DEEPSLEEP) && defined(SWITCH)
     } else if (millis() - timerButtonPressedStart > 0) {
       calculate = false;
       digitalWrite(RELAY, !digitalRead(RELAY));
@@ -205,9 +212,11 @@ void loop() {
       publishSwitchState();
       Serial << "Switch state: " << digitalRead(RELAY) << endl;
     }
+    #else
   }
+  #endif
 }
-
+}
 
 void tick() {
   int state = digitalRead(LED);
@@ -220,6 +229,7 @@ void saveConfigCallback () {
   Serial << "Should save config" << endl;
 }
 
+#if !defined(DEEPSLEEP) && defined(SWITCH)
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial << " > " << topic << ": ";
   for (unsigned int i = 0; i < length; i++) {
@@ -232,6 +242,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     writeSwitchStateEEPROM();
   }
 }
+#endif
 
 void setupHardware() {
   Serial.begin(115200);
@@ -252,7 +263,9 @@ void setupHardware() {
   bmp.begin();
   #endif
   pinMode(BUTTON, INPUT_PULLUP);
+  #if !defined(DEEPSLEEP) && defined(SWITCH)
   pinMode(RELAY, OUTPUT);
+  #endif
   pinMode(LED, OUTPUT);
 }
 
@@ -263,7 +276,13 @@ void printSettings() {
   Serial << "DEEPSLEEP: " << DEEPSLEEP << "s" << endl;
   #endif
   Serial << "BUTTON: " << BUTTON << endl;
+  Serial << "SWITCH: ";
+  #if !defined(DEEPSLEEP) && defined(SWITCH)
+  Serial << "enabled" << endl;
   Serial << "RELAY: " << RELAY << endl;
+  #else
+  Serial << "disabled" << endl;
+  #endif
   Serial << "LED: " << LED << endl;
   Serial << "DHTJACK: " << DHTJACK << endl;
   Serial << "ONEWIREJACK: " << ONEWIREJACK << endl;
@@ -292,9 +311,12 @@ void printSettings() {
 void setupPubSub() {
   pubSubClient.setClient(wifiClient);
   pubSubClient.setServer(mqtt_server, String(mqtt_port).toInt());
+  #if !defined(DEEPSLEEP) && defined(SWITCH)
   pubSubClient.setCallback(callback);
+  #endif
 }
 
+#if !defined(DEEPSLEEP) && defined(SWITCH)
 void readSwitchStateEEPROM() {
   EEPROM.begin(512);
   digitalWrite(RELAY, EEPROM.read(address));
@@ -316,6 +338,7 @@ void publishSwitchState() {
     }
   }
 }
+#endif
 
 void checkForConfigReset() {
   Serial << "waiting 1 sec for pressing button " << BUTTON << " to reset" << endl;
@@ -436,7 +459,7 @@ bool connect() {
   }
   if (connected) {
     Serial << "connected, rc=" << pubSubClient.state() << endl;
-    #ifndef DEEPSLEEP
+    #if !defined(DEEPSLEEP) && defined(SWITCH)
     publishSwitchState();
     #endif
     publishValues();

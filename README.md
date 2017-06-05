@@ -107,6 +107,9 @@ For Deepsleep connect D0 -> RST
 ### enable deep sleep (default not defined)
 * #define DEEPSLEEP 1200
 
+### enable switch function (default not defined)
+* #define SWITCH
+
 ### default gpio settings
 * ADC -> voltage measurement
 * #define BUTTON      0   -> gpio 0
@@ -143,4 +146,4 @@ For Deepsleep connect D0 -> RST
 * I2C (Wire)
   * BH1750 (lux)                      - LUX
   * SHT3X (temperature and humidity)  - SHT3X
-  * BMP (pressure)                    - BMP
+  * BMP180/BMP085 (pressure)          - BMP
