@@ -22,5 +22,4 @@ def after_bin(source, target, env):
 
 print "Current build targets", map(str, BUILD_TARGETS)
 
-
 env.AddPostAction("$BUILD_DIR/firmware.bin", after_bin)

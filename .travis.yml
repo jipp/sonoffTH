@@ -1,3 +1,4 @@
+ib search dht
 language: python
 python:
     - "2.7"
@@ -12,7 +13,7 @@ env:
 
 install:
     - pip install -U platformio
-    - platformio lib -g install 1 19 54 64 89 439 525 560 567
+    - platformio lib -g install 1 19 31 54 64 89 439 525 560 567
 
 script:
     - platformio ci --project-conf=platformio.ini

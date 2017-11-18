@@ -1,0 +1,25 @@
+#!/usr/bin/expect
+
+stty -echo
+send_user -- "Enter Password: "
+expect_user -re "(.*)\n"
+send_user "\n"
+stty echo
+set PASS $expect_out(1,string)
+
+spawn sftp pi@lemonpi
+
+expect "password: "
+send "$PASS\n"
+
+expect "sftp> "
+send "lcd bin\n"
+
+expect "sftp> "
+send "cd /var/www/html/esp/update/bin\n"
+
+expect "sftp> "
+send "put *\n"
+
+expect "sftp> "
+send "bye\n"
