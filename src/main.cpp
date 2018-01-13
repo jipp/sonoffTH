@@ -5,7 +5,7 @@
 #define DS18B20 0x28
 #define DS18S20 0x10
 
-#if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
+#if DHTSENSOR
 #include <DHT.h>
 #endif
 #if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
@@ -89,8 +89,8 @@ ADC_MODE(ADC_VCC);
 // global definitions
 Ticker ticker;
 PubSubClient pubSubClient;
-#if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
-DHT dht(DHTJACK, DHTSENSOR);
+#if DHTSENSOR
+DHT dht;
 #endif
 #if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
 OneWire oneWire(ONEWIREJACK);
@@ -247,8 +247,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setupHardware() {
   Serial.begin(115200);
   ticker.attach(0.3, tick);
-  #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
-  dht.begin();
+  #if DHTSENSOR
+  dht.setup(DHTJACK);
   #endif
   #if (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   dallasTemperature.begin();
@@ -287,7 +287,7 @@ void printSettings() {
   Serial << "DHTJACK: " << DHTJACK << endl;
   Serial << "ONEWIREJACK: " << ONEWIREJACK << endl;
   #ifdef DHTSENSOR
-  Serial << "DHT: " << DHTSENSOR << endl;
+  Serial << "DHT: DHTSENSOR" << endl;
   #endif
   #ifdef ONEWIRESENSOR
   Serial << "ONEWIRESENSOR: " << ONEWIRESENSOR << endl;
@@ -371,9 +371,9 @@ void setupID() {
 
 void publishValues() {
   unsigned int vcc = ESP.getVcc();
-  #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22)
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+  #if DHTSENSOR
+  float temperature = dht.getTemperature();
+  float humidity = dht.getHumidity();
   #elif (ONEWIRESENSOR == DS1822) || (ONEWIRESENSOR == DS18B20) || (ONEWIRESENSOR == DS18S20)
   float temperature;
   #endif
@@ -409,7 +409,7 @@ void publishValues() {
     } else {
       Serial << "!< " << publishVccTopic << ": " << vcc << endl;
     }
-    #if (DHTSENSOR == DHT11) || (DHTSENSOR == DHT21) || (DHTSENSOR == DHT22) || defined(SHT3X)
+    #if defined(DHTSENSOR) || defined(SHT3X)
     if (!isnan(temperature) && pubSubClient.publish(publishTemperatureTopic.c_str(), String(temperature).c_str())) {
       Serial << " < " << publishTemperatureTopic << ": " << temperature << endl;
     } else {
